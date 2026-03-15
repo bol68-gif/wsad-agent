@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Brand DNA{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl bebas teal-text tracking-widest">Brand DNA Settings</h2>
+        <button class="bg-[#008080] hover:bg-[#005F5F] px-6 py-2 rounded text-white text-xs uppercase bebas tracking-widest transition">Save Changes</button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Identity Section -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Core Identity</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Brand Name</label>
+                    <input type="text" value="{{ brand.name }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Tagline</label>
+                    <input type="text" value="{{ brand.tagline }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase text-gray-500 mb-1">Website</label>
+                        <input type="text" value="{{ brand.website }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase text-gray-500 mb-1">WhatsApp</label>
+                        <input type="text" value="{{ brand.whatsapp }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voice & USPs -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Brand Voice & USPs</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Voice Personality</label>
+                    <textarea class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded h-24 focus:border-[#008080] outline-none transition resize-none">{{ brand.voice }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Key USPs (One per line)</label>
+                    <textarea class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded h-32 focus:border-[#008080] outline-none transition resize-none">{% for usp in brand.usps %}{{ usp }}
+{% endfor %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visuals Section -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Visual Identity</h3>
+            <div class="grid grid-cols-2 gap-8">
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-2">Primary Teal</label>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded bg-[#008080]"></div>
+                        <input type="text" value="{{ brand.colors.primary_teal }}" class="bg-transparent border-b border-[#333] text-sm focus:border-[#008080] outline-none w-24">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-2">Dark Teal</label>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded bg-[#005F5F]"></div>
+                        <input type="text" value="{{ brand.colors.dark_teal }}" class="bg-transparent border-b border-[#333] text-sm focus:border-[#008080] outline-none w-24">
+                    </div>
+                </div>
+            </div>
+            <div class="pt-4">
+                <label class="block text-[10px] uppercase text-gray-500 mb-2">Brand Fonts</label>
+                <div class="flex space-x-4">
+                    <span class="bebas text-2xl border border-[#333] p-2 rounded px-4">{{ brand.fonts.headline }}</span>
+                    <span class="text-lg font-bold border border-[#333] p-2 rounded px-4">{{ brand.fonts.body }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Section -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Targeting</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Factory Location</label>
+                    <input type="text" value="{{ brand.location }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-2">Priority Cities</label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for city in brand.target_cities %}
+                        <span class="bg-[#1A1A1A] border border-[#333] text-[10px] px-3 py-1 rounded-full uppercase">{{ city }}</span>
+                        {% endfor %}
+                        <button class="text-[#008080] text-lg font-bold px-2">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

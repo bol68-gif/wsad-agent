@@ -1,0 +1,1 @@
+// Logs JS coming soon

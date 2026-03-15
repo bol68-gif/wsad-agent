@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl bebas teal-text tracking-widest">Content Calendar</h2>
+        <div class="flex items-center space-x-4">
+            <button class="bg-[#1A1A1A] border border-[#333] px-4 py-2 rounded text-xs uppercase hover:teal-text transition">Previous</button>
+            <span class="bebas text-xl">March 2025</span>
+            <button class="bg-[#1A1A1A] border border-[#333] px-4 py-2 rounded text-xs uppercase hover:teal-text transition">Next</button>
+            <button class="bg-[#008080] px-4 py-2 rounded text-white text-xs uppercase bebas tracking-widest ml-4">Regenerate Week</button>
+        </div>
+    </div>
+
+    <div class="card overflow-hidden">
+        <div class="grid grid-cols-7 bg-[#111] border-b border-[#333]">
+            {% for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
+            <div class="p-4 text-center text-[10px] uppercase tracking-widest text-gray-500 font-bold border-r border-[#333]">
+                {{ day }}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="grid grid-cols-7 grid-rows-5 h-[600px]">
+            {% for i in range(1, 32) %}
+            <div class="p-2 border-r border-b border-[#333] hover:bg-teal-900/5 transition cursor-pointer group relative">
+                <span class="text-xs text-gray-600 group-hover:text-white transition">{{ i }}</span>
+                {% if i == 15 %}
+                <div class="mt-2 p-1 bg-[#008080]/20 border border-[#008080] rounded text-[9px] text-white">
+                    <span class="block font-bold">REEL</span>
+                    <span class="text-gray-400">Mumbai Rain Pro</span>
+                </div>
+                <div class="absolute inset-0 border-2 border-[#008080] pointer-events-none"></div>
+                {% elif i % 3 == 0 %}
+                <div class="mt-2 p-1 bg-gray-800 border border-gray-700 rounded text-[9px] text-gray-400">
+                    <span class="block font-bold">IMAGE</span>
+                    <span class="text-gray-500">Elite Raincoat</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% for i in range(4) %}
+            <div class="p-2 border-r border-b border-[#333] bg-[#050505]"></div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex space-x-8 text-[10px] uppercase tracking-widest text-gray-500 justify-center py-4">
+        <div class="flex items-center space-x-2">
+            <div class="w-3 h-3 bg-[#008080]/20 border border-[#008080] rounded"></div>
+            <span>Posted / Approved</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div class="w-3 h-3 bg-gray-800 border border-gray-700 rounded"></div>
+            <span>Scheduled</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div class="w-3 h-3 border-2 border-[#008080] rounded"></div>
+            <span>Today</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

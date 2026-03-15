@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl bebas teal-text tracking-widest">Growth Analytics</h2>
+        <div class="flex bg-[#111] p-1 rounded-lg border border-[#333]">
+            <button class="px-4 py-1 rounded text-[10px] uppercase font-bold bg-[#008080] text-white">Instagram</button>
+            <button class="px-4 py-1 rounded text-[10px] uppercase font-bold text-gray-500 hover:text-white transition">Combined</button>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {% for stat in [('Reach', '142.5K', '+12%'), ('Likes', '8.4K', '+5%'), ('Saves', '1.2K', '+24%'), ('Clicks', '640', '+8%')] %}
+        <div class="card p-6 text-center">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-2">{{ stat[0] }}</h3>
+            <p class="text-3xl bebas teal-text">{{ stat[1] }}</p>
+            <span class="text-[10px] text-green-500 font-bold">{{ stat[2] }} vs last week</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Chart Section -->
+    <div class="card p-8 h-[400px]">
+        <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-6">30-Day Reach Trend</h3>
+        <div class="w-full h-full flex items-center justify-center border border-dashed border-[#333] rounded italic text-gray-600 text-xs">
+            Chart.js Visualization Placeholder
+        </div>
+    </div>
+
+    <!-- Best Posts -->
+    <div class="card p-6">
+        <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-6">Top Performing Content</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-[#111] text-gray-500 uppercase">
+                    <tr>
+                        <th class="p-4 border-b border-[#333]">Post</th>
+                        <th class="p-4 border-b border-[#333]">Type</th>
+                        <th class="p-4 border-b border-[#333]">Reach</th>
+                        <th class="p-4 border-b border-[#333]">ER%</th>
+                        <th class="p-4 border-b border-[#333]">Sales Tag</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#222]">
+                    {% for i in range(3) %}
+                    <tr class="hover:bg-white/5 transition">
+                        <td class="p-4 flex items-center space-x-3 font-bold">
+                            <div class="w-10 h-10 bg-gray-800 rounded"></div>
+                            <span>Monsoon Pro Biker Suit #{{ i+1 }}</span>
+                        </td>
+                        <td class="p-4 uppercase text-[10px]">Reel</td>
+                        <td class="p-4 teal-text font-bold">42.1K</td>
+                        <td class="p-4">4.2%</td>
+                        <td class="p-4">
+                            <span class="bg-green-900/20 text-green-500 text-[10px] px-2 py-1 rounded">High</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

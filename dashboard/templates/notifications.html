@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl bebas teal-text tracking-widest">System Notifications</h2>
+        <button class="bg-[#1A1A1A] border border-[#333] px-6 py-2 rounded text-xs uppercase hover:text-white transition">Mark All Read</button>
+    </div>
+
+    <div class="flex space-x-4 border-b border-[#333] pb-4">
+        <button class="text-[10px] uppercase font-bold teal-text border-b-2 border-[#008080] pb-4 px-2">All</button>
+        <button class="text-[10px] uppercase font-bold text-gray-500 hover:text-white transition pb-4 px-2">Urgent</button>
+        <button class="text-[10px] uppercase font-bold text-gray-500 hover:text-white transition pb-4 px-2">Agent Updates</button>
+    </div>
+
+    <div class="space-y-4">
+        {% for note in notifications %}
+        <div class="card p-6 flex items-start space-x-6 {% if note.urgent %}border-l-4 border-l-red-600 bg-red-900/5{% endif %}">
+            <div class="w-10 h-10 rounded-full bg-[#111] border border-[#333] flex items-center justify-center shrink-0">
+                {% if note.type == 'approval' %}
+                <svg class="w-5 h-5 teal-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% elif note.type == 'weather' %}
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+                {% else %}
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% endif %}
+            </div>
+            <div class="flex-grow space-y-1">
+                <div class="flex justify-between items-start">
+                    <h4 class="text-sm font-bold uppercase">{{ note.title }}</h4>
+                    <span class="text-[10px] text-gray-500">{{ note.timestamp.strftime('%d %b, %H:%M') }}</span>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed">{{ note.message }}</p>
+                {% if note.page_link %}
+                <a href="{{ note.page_link }}" class="inline-block pt-2 text-[10px] teal-text uppercase font-bold hover:underline">View Details &rarr;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="py-20 text-center text-gray-600">
+            <p class="text-xs uppercase tracking-widest italic">Inbox Zero. You're all caught up!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

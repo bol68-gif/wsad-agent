@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RF Agent - {% block title %}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-teal: #008080;
+            --dark-teal: #005F5F;
+            --bg-dark: #0A0A0A;
+            --surface-dark: #1A1A1A;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: #E0E0E0;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .bebas { font-family: 'Bebas Neue', cursive; }
+        .teal-glow { text-shadow: 0 0 10px rgba(0, 128, 128, 0.5); }
+        .teal-border { border-color: var(--primary-teal); }
+        .teal-bg { background-color: var(--primary-teal); }
+        .teal-text { color: var(--primary-teal); }
+        .card { background-color: var(--surface-dark); border: 1px solid #333; border-radius: 0.5rem; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Top Nav -->
+    <nav class="bg-[#111] border-b border-[#333] sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('routes.home') }}" class="text-2xl bebas teal-text teal-glow">RF AGENT</a>
+                    <div class="hidden md:flex space-x-4 text-xs uppercase tracking-widest ml-10">
+                        <a href="{{ url_for('routes.home') }}" class="hover:teal-text transition">Dashboard</a>
+                        <a href="{{ url_for('routes.logs') }}" class="hover:teal-text transition">Logs</a>
+                        <a href="{{ url_for('routes.calendar') }}" class="hover:teal-text transition">Calendar</a>
+                        <a href="{{ url_for('routes.pipeline') }}" class="hover:teal-text transition">Pipeline</a>
+                        <a href="{{ url_for('routes.analytics') }}" class="hover:teal-text transition">Analytics</a>
+                        <a href="{{ url_for('routes.weather') }}" class="hover:teal-text transition">Weather</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <!-- Agent Status -->
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span class="text-[10px] uppercase text-gray-400">Agent Live</span>
+                    </div>
+                    <!-- Notifications -->
+                    <a href="{{ url_for('routes.notifications') }}" class="relative p-1">
+                        <svg class="w-6 h-6 text-gray-400 hover:teal-text transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <span class="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-600 text-[10px] text-white text-center leading-4">3</span>
+                    </a>
+                    <!-- User -->
+                    <a href="{{ url_for('auth.logout') }}" class="text-xs text-gray-400 hover:text-white uppercase tracking-tighter">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar / Sub-nav for extra pages -->
+    <div class="bg-[#0F0F0F] border-b border-[#222] py-2 px-4 overflow-x-auto whitespace-nowrap">
+        <div class="max-w-7xl mx-auto flex space-x-6 text-[10px] uppercase tracking-widest text-gray-500">
+            <a href="{{ url_for('routes.products') }}" class="hover:text-white">Products</a>
+            <a href="{{ url_for('routes.ads') }}" class="hover:text-white">Ads</a>
+            <a href="{{ url_for('routes.competitors') }}" class="hover:text-white">Competitors</a>
+            <a href="{{ url_for('routes.brand') }}" class="hover:text-white">Brand DNA</a>
+            <a href="{{ url_for('routes.settings') }}" class="hover:text-white">Agent Settings</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto w-full p-4 md:p-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-[#222] p-6 text-center text-xs text-gray-600 uppercase tracking-widest">
+        &copy; 2025 RELAX FASHIONWEAR - <a href="https://relaxfashionwear.in" class="hover:teal-text transition">relaxfashionwear.in</a>
+    </footer>
+
+    <script>
+        const socket = io();
+        socket.on('connect', () => console.log('Socket.IO connected'));
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

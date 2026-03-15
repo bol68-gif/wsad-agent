@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Pipeline{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl bebas teal-text tracking-widest">Content Pipeline</h2>
+        <div class="flex bg-[#111] p-1 rounded-lg border border-[#333]">
+            <button class="px-6 py-2 rounded-md text-[10px] uppercase font-bold bg-[#008080] text-white">Pending</button>
+            <button class="px-6 py-2 rounded-md text-[10px] uppercase font-bold text-gray-500 hover:text-white transition">Approved</button>
+            <button class="px-6 py-2 rounded-md text-[10px] uppercase font-bold text-gray-500 hover:text-white transition">Posted</button>
+        </div>
+    </div>
+
+    <!-- Grid for Pending Posts -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        {% for post in pending %}
+        <div class="card overflow-hidden group">
+            <div class="aspect-square bg-[#0A0A0A] relative overflow-hidden">
+                <div class="absolute inset-0 flex items-center justify-center text-gray-800 text-6xl bebas italic">PREVIEW</div>
+                <div class="absolute top-4 left-4 bg-[#008080] text-white text-[10px] font-bold px-2 py-1 rounded uppercase">{{ post.post_type }}</div>
+                <div class="absolute top-4 right-4 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded uppercase border border-[#008080] teal-glow">{{ post.director_score }} / 10</div>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold uppercase tracking-widest">{{ post.product_name }}</h4>
+                    <p class="text-[10px] text-gray-400 leading-relaxed italic line-clamp-3">"{{ post.caption }}"</p>
+                </div>
+
+                <!-- Score Bars -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[8px] uppercase text-gray-500"><span>Hook</span><span>{{ post.hook_score }}</span></div>
+                        <div class="h-1 bg-[#222] rounded-full overflow-hidden"><div class="bg-[#008080] h-full" style="width: {{ post.hook_score * 10 }}%"></div></div>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[8px] uppercase text-gray-500"><span>Visual</span><span>{{ post.visual_score }}</span></div>
+                        <div class="h-1 bg-[#222] rounded-full overflow-hidden"><div class="bg-[#008080] h-full" style="width: {{ post.visual_score * 10 }}%"></div></div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-teal-900/10 border-l-2 border-[#008080] rounded">
+                    <p class="text-[9px] text-gray-400 uppercase tracking-tighter font-bold mb-1">Director Note:</p>
+                    <p class="text-[10px] text-gray-300 italic">"{{ post.director_note }}"</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-4">
+                    <button onclick="approvePost({{ post.id }})" class="bg-[#008080] hover:bg-[#005F5F] text-white text-[10px] font-bold py-3 rounded transition uppercase tracking-widest">Approve</button>
+                    <button class="bg-[#1A1A1A] hover:bg-[#222] text-gray-400 hover:text-white text-[10px] font-bold py-3 rounded border border-[#333] transition uppercase tracking-widest">Edit</button>
+                    <button class="bg-red-900/20 hover:bg-red-900/40 text-red-500 text-[10px] font-bold py-3 rounded border border-red-900/30 transition uppercase tracking-widest col-span-2">Regenerate</button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full py-32 text-center text-gray-600 space-y-4">
+            <p class="bebas text-4xl uppercase tracking-[0.2em]">Pipeline Empty</p>
+            <p class="text-[10px] uppercase tracking-widest">AI Team is working on new content...</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function approvePost(postId) {
+        fetch(`/api/posts/${postId}/approve`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') location.reload();
+            });
+    }
+</script>
+{% endblock %}

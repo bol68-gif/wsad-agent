@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Ad Campaigns{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl bebas teal-text tracking-widest">Ad Center</h2>
+        <button class="bg-[#008080] hover:bg-[#005F5F] px-6 py-2 rounded text-white text-xs uppercase bebas tracking-widest transition">Create Campaign</button>
+    </div>
+
+    <!-- Active Campaigns -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {% for campaign in campaigns %}
+        <div class="card p-6 border-t-4 border-t-[#008080]">
+            <div class="flex justify-between items-start mb-4">
+                <h4 class="text-xs font-bold uppercase tracking-widest">{{ campaign.objective }}</h4>
+                <span class="bg-green-900/20 text-green-500 text-[10px] px-2 py-1 rounded font-bold uppercase">{{ campaign.status }}</span>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-[9px] uppercase text-gray-500">Daily Budget</p>
+                        <p class="text-xl bebas teal-text">₹{{ campaign.budget_daily }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] uppercase text-gray-500">Total Spent</p>
+                        <p class="text-xl bebas">₹{{ campaign.total_spent }}</p>
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-[#222] flex justify-between items-center">
+                    <div class="text-center flex-grow border-r border-[#222]">
+                        <p class="text-[9px] uppercase text-gray-500">Reach</p>
+                        <p class="text-sm font-bold">{{ campaign.reach }}</p>
+                    </div>
+                    <div class="text-center flex-grow">
+                        <p class="text-[9px] uppercase text-gray-500">CTR</p>
+                        <p class="text-sm font-bold">{{ campaign.ctr }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full card p-12 text-center bg-teal-900/5 border-dashed border-[#008080]/30">
+            <p class="text-gray-500 text-xs uppercase tracking-[0.3em] mb-4">No Active Ad Campaigns</p>
+            <p class="text-gray-600 text-[10px] uppercase tracking-widest leading-relaxed max-w-md mx-auto">
+                The AI Analyst will suggest ad campaigns for high-performing posts automatically. Check the Pipeline tab for "Ad Ready" recommendations.
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- AI Recommendations -->
+    <div class="card p-8 bg-[#111]">
+        <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-6">Agent Recommendations</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="p-4 bg-[#0A0A0A] border border-[#333] rounded-lg flex items-start space-x-4">
+                <div class="w-10 h-10 rounded bg-[#008080]/20 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 teal-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+                <div class="space-y-1">
+                    <h5 class="text-[10px] uppercase font-bold text-white">Boost Opportunity</h5>
+                    <p class="text-[11px] text-gray-400">Post #1042 (Biker Suit Reel) is over-performing by 2.4x. Recommend ₹500 daily spend for 3 days targeting Mumbai/Pune.</p>
+                    <button class="text-[9px] teal-text uppercase font-bold pt-2 hover:underline">Apply Now</button>
+                </div>
+            </div>
+            <div class="p-4 bg-[#0A0A0A] border border-[#333] rounded-lg flex items-start space-x-4">
+                <div class="w-10 h-10 rounded bg-blue-900/20 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div class="space-y-1">
+                    <h5 class="text-[10px] uppercase font-bold text-white">Budget Forecast</h5>
+                    <p class="text-[11px] text-gray-400">Rain predicted for next 48h. Agent will increase spend on 'Safety Gear' ads automatically to capture high demand.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

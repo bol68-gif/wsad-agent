@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Agent Settings{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl bebas teal-text tracking-widest">Agent System Settings</h2>
+        <button class="bg-[#008080] hover:bg-[#005F5F] px-6 py-2 rounded text-white text-xs uppercase bebas tracking-widest transition">Save Config</button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Posting Schedule -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Posting Schedule</h3>
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Morning Post</label>
+                    <input type="time" value="{{ agent.morning_post_time }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Evening Post</label>
+                    <input type="time" value="{{ agent.evening_post_time }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Story Time</label>
+                    <input type="time" value="{{ agent.story_time }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-2">Platforms</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4 rounded bg-[#0A0A0A] border-[#333] text-[#008080] focus:ring-0">
+                            <span class="text-xs uppercase">IG</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4 rounded bg-[#0A0A0A] border-[#333] text-[#008080] focus:ring-0">
+                            <span class="text-xs uppercase">FB</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Director Logic -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Director AI Logic</h3>
+            <div class="space-y-6">
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-[10px] uppercase text-gray-500">Minimum Approval Score</label>
+                        <span class="text-xs font-bold teal-text">{{ agent.director_min_score }} / 10</span>
+                    </div>
+                    <input type="range" min="0" max="10" step="0.1" value="{{ agent.director_min_score }}" class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#008080]">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Max Revision Attempts</label>
+                    <input type="number" value="{{ agent.max_revision_attempts }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                </div>
+            </div>
+        </div>
+
+        <!-- Gemini Settings -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Gemini AI Model</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Active Model</label>
+                    <select class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                        <option value="gemini-1.5-pro" selected>{{ agent.gemini_model }}</option>
+                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                    </select>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-[10px] uppercase text-gray-500">Temperature (Creativity)</label>
+                        <span class="text-xs font-bold teal-text">{{ agent.gemini_temperature }}</span>
+                    </div>
+                    <input type="range" min="0" max="1" step="0.1" value="{{ agent.gemini_temperature }}" class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#008080]">
+                </div>
+            </div>
+        </div>
+
+        <!-- System Controls -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">System Controls</h3>
+            <div class="grid grid-cols-2 gap-4 pt-2">
+                <button class="bg-[#1A1A1A] border border-[#333] hover:border-red-500 text-red-500 text-[10px] font-bold py-3 rounded uppercase transition tracking-widest">Pause Agent</button>
+                <button class="bg-[#1A1A1A] border border-[#333] hover:border-blue-500 text-blue-500 text-[10px] font-bold py-3 rounded uppercase transition tracking-widest">Restart Team</button>
+                <div class="col-span-2 p-3 bg-teal-900/10 rounded flex justify-between items-center">
+                    <span class="text-[10px] uppercase text-gray-400">Improvement Mode</span>
+                    <div class="w-8 h-4 bg-[#008080] rounded-full relative">
+                        <div class="w-2 h-2 bg-white rounded-full absolute right-1 top-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
