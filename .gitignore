@@ -1,0 +1,24 @@
+# Never commit these
+.env
+*.db
+venv/
+Git/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# Installers
+*.zip
+*.exe
+
+# Generated content — too large for GitHub
+assets/generated/
+assets/products/
+assets/music/
+assets/sfx/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
