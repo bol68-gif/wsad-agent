@@ -1,83 +1,229 @@
-{% extends "base.html" %}
-{% block title %}Weather{% endblock %}
-
-{% block content %}
-<div class="space-y-8">
-    <div class="flex justify-between items-center">
-        <h2 class="text-3xl bebas teal-text tracking-widest">Monsoon Intelligence</h2>
-        <div class="p-4 bg-teal-900/10 border border-[#008080] rounded flex items-center space-x-4">
-            <span class="text-xs uppercase tracking-widest text-gray-400">Rain Threshold:</span>
-            <span class="bebas text-xl">50mm</span>
-            <span class="text-xs uppercase tracking-widest text-gray-400 ml-4">Auto-Post:</span>
-            <span class="bg-red-900/20 text-red-500 text-[10px] px-2 py-1 rounded font-bold">OFF</span>
-        </div>
-    </div>
-
-    <!-- City Table -->
-    <div class="card p-6">
-        <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-6">Live City Monitoring</h3>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-[#111] text-gray-500 uppercase">
-                    <tr>
-                        <th class="p-4 border-b border-[#333]">City</th>
-                        <th class="p-4 border-b border-[#333]">Rainfall (mm)</th>
-                        <th class="p-4 border-b border-[#333]">Intensity</th>
-                        <th class="p-4 border-b border-[#333]">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[#222]">
-                    {% for city in cities %}
-                    <tr class="hover:bg-white/5 transition">
-                        <td class="p-4 font-bold">{{ city }}</td>
-                        <td class="p-4 text-xl bebas {% if city == 'Mumbai' %}teal-text{% else %}text-gray-500{% endif %}">
-                            {% if city == 'Mumbai' %}62mm{% else %}0mm{% endif %}
-                        </td>
-                        <td class="p-4">
-                            {% if city == 'Mumbai' %}
-                            <span class="bg-blue-900/30 text-blue-400 text-[10px] px-2 py-1 rounded uppercase font-bold border border-blue-900">Heavy Rain</span>
-                            {% else %}
-                            <span class="text-gray-600">--</span>
-                            {% endif %}
-                        </td>
-                        <td class="p-4">
-                            {% if city == 'Mumbai' %}
-                            <button class="bg-[#008080] hover:bg-[#005F5F] px-4 py-1 rounded text-[10px] uppercase font-bold text-white transition">Trigger Reel</button>
-                            {% else %}
-                            <button class="bg-[#1A1A1A] text-gray-600 px-4 py-1 rounded text-[10px] uppercase font-bold cursor-not-allowed">No Rain</button>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Trigger Settings -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="card p-6">
-            <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-6">Trigger Settings</h3>
-            <div class="space-y-4">
-                <div class="flex justify-between items-center p-3 bg-[#0A0A0A] rounded border border-[#222]">
-                    <span class="text-xs">Post automatically on heavy rain</span>
-                    <div class="w-10 h-5 bg-gray-800 rounded-full relative">
-                        <div class="w-3 h-3 bg-gray-600 rounded-full absolute left-1 top-1"></div>
-                    </div>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-[#0A0A0A] rounded border border-[#222]">
-                    <span class="text-xs">Send Telegram alert on trigger</span>
-                    <div class="w-10 h-5 bg-[#008080]/30 rounded-full relative">
-                        <div class="w-3 h-3 bg-[#008080] rounded-full absolute right-1 top-1"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card p-6 flex flex-col justify-center items-center text-center space-y-4">
-            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Monsoon Season</h3>
-            <p class="text-6xl bebas teal-text tracking-tighter">Day 0</p>
-            <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Countdown to June 1st</p>
-        </div>
-    </div>
-</div>
+{% extends "base.html" %} 
+{% block title %}Weather Monitor{% endblock %} 
+ 
+{% block content %} 
+<div class="space-y-6"> 
+    <div class="flex justify-between items-center"> 
+        <h2 class="text-3xl bebas teal-text tracking-widest">🌧️ Monsoon Intelligence</h2> 
+        <div class="flex items-center gap-4"> 
+            <button onclick="refreshWeather()" 
+                    class="px-4 py-2 bg-teal-700 hover:bg-teal-600 text-white rounded text-xs font-bold"> 
+                🔄 Refresh Now 
+            </button> 
+            <div class="p-3 bg-teal-900/10 border border-teal-800 rounded flex items-center gap-3"> 
+                <span class="text-xs text-gray-400">Rain Threshold:</span> 
+                <span class="bebas text-lg teal-text">50mm</span> 
+                <span class="text-xs text-gray-400 ml-3">Auto-Post:</span> 
+                <span class="bg-red-900/20 text-red-400 text-[10px] px-2 py-1 rounded font-bold">OFF</span> 
+            </div> 
+        </div> 
+    </div> 
+ 
+    <!-- Monsoon Countdown --> 
+    <div class="card p-6 text-center"> 
+        <p class="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Days Until Monsoon Season</p> 
+        <p id="monsoonCountdown" class="text-6xl bebas teal-text tracking-tighter">...</p> 
+        <p class="text-[10px] text-gray-400 mt-1">June 1, 2025 — Start ramping up content now</p> 
+    </div> 
+ 
+    <!-- City Table --> 
+    <div class="card p-6"> 
+        <div class="flex justify-between items-center mb-4"> 
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Live City Monitoring</h3> 
+            <span id="lastUpdated" class="text-[9px] text-gray-600">Loading...</span> 
+        </div> 
+        <div class="overflow-x-auto"> 
+            <table class="w-full text-left text-xs"> 
+                <thead class="bg-[#111] text-gray-500 uppercase text-[9px]"> 
+                    <tr> 
+                        <th class="p-4 border-b border-[#333]">City</th> 
+                        <th class="p-4 border-b border-[#333]">Condition</th> 
+                        <th class="p-4 border-b border-[#333]">Rainfall</th> 
+                        <th class="p-4 border-b border-[#333]">Intensity</th> 
+                        <th class="p-4 border-b border-[#333]">Temp</th> 
+                        <th class="p-4 border-b border-[#333]">Action</th> 
+                    </tr> 
+                </thead> 
+                <tbody id="weatherTableBody" class="divide-y divide-[#222]"> 
+                    <tr> 
+                        <td colspan="6" class="p-8 text-center text-gray-500"> 
+                            <div class="animate-spin text-2xl mb-2">⏳</div> 
+                            Loading weather data... 
+                        </td> 
+                    </tr> 
+                </tbody> 
+            </table> 
+        </div> 
+    </div> 
+ 
+    <!-- Active Rain Alerts --> 
+    <div class="card p-6"> 
+        <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-4">Recent Rain Alerts</h3> 
+        <div id="rainAlerts" class="space-y-2"> 
+            <p class="text-gray-600 text-xs">No recent alerts</p> 
+        </div> 
+    </div> 
+ 
+    <!-- Settings --> 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> 
+        <div class="card p-6"> 
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-4">Trigger Settings</h3> 
+            <div class="space-y-3"> 
+                <div class="flex justify-between items-center p-3 bg-[#0A0A0A] rounded border border-[#222]"> 
+                    <span class="text-xs">Post automatically on heavy rain</span> 
+                    <div class="w-10 h-5 bg-gray-800 rounded-full relative cursor-pointer"> 
+                        <div class="w-3 h-3 bg-gray-600 rounded-full absolute left-1 top-1"></div> 
+                    </div> 
+                </div> 
+                <div class="flex justify-between items-center p-3 bg-[#0A0A0A] rounded border border-[#222]"> 
+                    <span class="text-xs">Send Telegram alert on rain trigger</span> 
+                    <div class="w-10 h-5 bg-teal-900/50 rounded-full relative"> 
+                        <div class="w-3 h-3 bg-teal-400 rounded-full absolute right-1 top-1"></div> 
+                    </div> 
+                </div> 
+                <button onclick="triggerWeatherCheck()" 
+                        class="w-full py-2 bg-teal-700 hover:bg-teal-600 text-white rounded text-xs font-bold mt-2"> 
+                    🌧️ Run Weather Check Now 
+                </button> 
+            </div> 
+        </div> 
+        <div class="card p-6"> 
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-4">Alert History</h3> 
+            <div id="alertHistory" class="space-y-2 text-xs text-gray-500"> 
+                Loading history... 
+            </div> 
+        </div> 
+    </div> 
+</div> 
+{% endblock %} 
+ 
+{% block scripts %} 
+<script> 
+const INTENSITY_COLORS = { 
+    none:     'text-gray-500', 
+    light:    'text-blue-400', 
+    moderate: 'text-yellow-400', 
+    heavy:    'text-orange-400', 
+    extreme:  'text-red-400' 
+}; 
+ 
+const INTENSITY_BG = { 
+    none:     'bg-gray-900/20 border-gray-700', 
+    light:    'bg-blue-900/20 border-blue-800', 
+    moderate: 'bg-yellow-900/20 border-yellow-800', 
+    heavy:    'bg-orange-900/20 border-orange-800', 
+    extreme:  'bg-red-900/20 border-red-800' 
+}; 
+ 
+async function loadWeather() { 
+    const data = await apiCall('/api/weather/current'); 
+    const tbody = document.getElementById('weatherTableBody'); 
+    const updated = document.getElementById('lastUpdated'); 
+ 
+    if (updated) updated.textContent = `Updated: ${new Date().toLocaleTimeString('en-IN')}`; 
+ 
+    if (!data || !data.data || !data.data.length) { 
+        if (tbody) tbody.innerHTML = ` 
+            <tr><td colspan="6" class="p-6 text-center text-gray-500 text-xs"> 
+                Weather API not configured — add WEATHER_API_KEY to .env 
+            </td></tr>`; 
+        return; 
+    } 
+ 
+    tbody.innerHTML = data.data.map(city => { 
+        const intensity = city.intensity || 'none'; 
+        const isRaining = city.rain_mm > 0; 
+        const isTrigger = city.trigger; 
+        return ` 
+            <tr class="hover:bg-white/5 transition ${isTrigger ? 'bg-orange-900/10' : ''}"> 
+                <td class="p-4 font-bold ${isTrigger ? 'teal-text' : ''}"> 
+                    ${isTrigger ? '⚠️ ' : ''}${city.city} 
+                </td> 
+                <td class="p-4 text-gray-400">${city.condition || 'Clear'}</td> 
+                <td class="p-4"> 
+                    <span class="bebas text-lg ${isRaining ? 'teal-text' : 'text-gray-600'}"> 
+                        ${city.rain_mm || 0}mm 
+                    </span> 
+                </td> 
+                <td class="p-4"> 
+                    <span class="px-2 py-1 rounded text-[9px] uppercase font-bold border 
+                                 ${INTENSITY_BG[intensity] || INTENSITY_BG.none} 
+                                 ${INTENSITY_COLORS[intensity] || 'text-gray-500'}"> 
+                        ${intensity} 
+                    </span> 
+                </td> 
+                <td class="p-4 text-gray-400">${city.temp ? city.temp + '°C' : '--'}</td> 
+                <td class="p-4"> 
+                    ${isTrigger 
+                        ? `<button onclick="triggerRainPost('${city.city}')" 
+                                   class="bg-teal-700 hover:bg-teal-600 px-3 py-1 rounded text-[9px] uppercase font-bold text-white transition"> 
+                               Create Post 
+                           </button>` 
+                        : `<span class="text-gray-600 text-[9px]">No action</span>` 
+                    } 
+                </td> 
+            </tr>`; 
+    }).join(''); 
+} 
+ 
+async function loadAlertHistory() { 
+    const data = await apiCall('/api/weather'); 
+    const container = document.getElementById('alertHistory'); 
+    if (!container) return; 
+    if (!data || !data.length) { 
+        container.innerHTML = '<p class="text-gray-600 text-xs">No alerts recorded yet</p>'; 
+        return; 
+    } 
+    container.innerHTML = data.map(alert => ` 
+        <div class="flex justify-between items-center py-1 border-b border-[#222]"> 
+            <span class="font-bold">${alert.city}</span> 
+            <span class="${INTENSITY_COLORS[alert.intensity] || 'text-gray-400'}">${alert.intensity}</span> 
+            <span class="text-gray-600 text-[9px]">${alert.timestamp || ''}</span> 
+        </div> 
+    `).join(''); 
+} 
+ 
+async function triggerWeatherCheck() { 
+    showAlert('Running weather check...', 'info'); 
+    const data = await apiCall('/api/scheduler/run_now/weather_check', 'POST'); 
+    if (data?.success) { 
+        showAlert(data.message, 'success'); 
+        setTimeout(loadWeather, 3000); 
+    } 
+} 
+ 
+async function triggerRainPost(city) { 
+    showAlert(`Creating emergency rain post for ${city}...`, 'info'); 
+    const data = await apiCall('/api/scheduler/run_now/content_creation', 'POST'); 
+    if (data?.success) { 
+        showAlert('Emergency post being created — check Pipeline!', 'success'); 
+    } 
+} 
+ 
+function refreshWeather() { 
+    showAlert('Refreshing weather data...', 'info'); 
+    loadWeather(); 
+    loadAlertHistory(); 
+} 
+ 
+function updateMonsoonCountdown() { 
+    const monsoon = new Date('2025-06-01'); 
+    const today   = new Date(); 
+    const diff    = Math.ceil((monsoon - today) / (1000 * 60 * 60 * 24)); 
+    const el      = document.getElementById('monsoonCountdown'); 
+    if (el) { 
+        if (diff > 0) { 
+            el.textContent = diff + ' Days'; 
+        } else { 
+            el.textContent = 'LIVE 🌧️'; 
+            el.className   = 'text-6xl bebas text-orange-400 tracking-tighter'; 
+        } 
+    } 
+} 
+ 
+loadWeather(); 
+loadAlertHistory(); 
+updateMonsoonCountdown(); 
+setInterval(loadWeather, 300000); // refresh every 5 minutes 
+</script> 
 {% endblock %}

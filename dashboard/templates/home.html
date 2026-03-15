@@ -71,19 +71,12 @@
         <!-- AI Team Activity -->
         <div class="card p-6">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-[10px] uppercase tracking-widest text-gray-500">AI Team Activity</h3>
-                <span class="text-[10px] text-[#008080] cursor-pointer">View All Logs</span>
+                <h3 class="text-[10px] uppercase tracking-widest text-gray-500">AI Team Live Status</h3>
+                <span id="nextJobTime" class="text-[9px] text-teal-400"></span>
             </div>
-            <div class="space-y-4">
-                {% for agent in [('Director', 'Idle'), ('Strategist', 'Idle'), ('Copywriter', 'Working'), ('Designer', 'Idle'), ('Analyst', 'Idle'), ('Growth Hacker', 'Idle')] %}
-                <div class="flex items-center justify-between p-3 bg-[#0A0A0A] rounded border border-[#222]">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-2 h-2 rounded-full {% if agent[1] == 'Working' %}bg-[#008080] animate-pulse{% else %}bg-gray-600{% endif %}"></div>
-                        <span class="text-sm font-medium">{{ agent[0] }}</span>
-                    </div>
-                    <span class="text-[10px] uppercase text-gray-500">{{ agent[1] }}</span>
-                </div>
-                {% endfor %}
+            <div id="agentStatusGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <!-- Filled by JavaScript -->
+                <div class="col-span-full py-8 text-center text-gray-600 italic text-xs">Loading AI team status...</div>
             </div>
         </div>
 
@@ -104,4 +97,45 @@
         </div>
     </div>
 </div>
+
+<script>
+async function loadAgentStatus() {
+    try {
+        const data = await apiCall('/api/agents/status');
+        if (!data || !data.agents) return;
+
+        const grid = document.getElementById('agentStatusGrid');
+        if (!grid) return;
+
+        const agents = data.agents;
+        grid.innerHTML = Object.entries(agents).map(([key, agent]) => `
+            <div class="bg-[#0a0a0a] border border-[#222] rounded-lg p-3">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-bold text-white">${agent.name}</span>
+                    <div class="w-2 h-2 rounded-full ${agent.status === 'active' ? 'bg-teal-400' : 'bg-gray-600'}"></div>
+                </div>
+                <p class="text-[9px] text-teal-400 mb-1">${agent.last_action}</p>
+                <p class="text-[9px] text-gray-600 truncate">${agent.content}</p>
+                <p class="text-[9px] text-gray-700 mt-1">${agent.last_time}</p>
+            </div>
+        `).join('');
+
+        // Show next job time
+        if (data.scheduler_jobs && data.scheduler_jobs.length) {
+            // Sort jobs by next_run
+            const jobs = [...data.scheduler_jobs].sort((a,b) => a.next_run.localeCompare(b.next_run));
+            const next = jobs[0];
+            const el = document.getElementById('nextJobTime');
+            if (el) el.textContent = `Next: ${next.id} at ${next.next_run.substring(11,16) || '—'}`;
+        }
+    } catch(e) {
+        console.error("Status load error:", e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadAgentStatus();
+    setInterval(loadAgentStatus, 30000);
+});
+</script>
 {% endblock %}

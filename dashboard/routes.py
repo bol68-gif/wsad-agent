@@ -36,7 +36,20 @@ def pipeline():
 @routes_bp.route("/products")
 @login_required
 def products():
-    products_list = config.BRAND.get("products", [])
+    from data.database import Product
+    products_list = Product.query.filter_by(active=True).all()
+    if not products_list:
+        # Fallback to catalog if DB is empty
+        from data.product_catalog import PRODUCTS
+        products_list = []
+        for i, p in enumerate(PRODUCTS):
+            p_copy = p.copy()
+            p_copy['id'] = i + 1000 # dummy id
+            p_copy['post_count'] = 0
+            p_copy['avg_engagement'] = 0.0
+            p_copy['primary_image'] = None
+            products_list.append(p_copy)
+            
     return render_template("products.html", products=products_list)
 
 @routes_bp.route("/analytics")

@@ -1,64 +1,217 @@
-{% extends "base.html" %}
-{% block title %}Calendar{% endblock %}
-
-{% block content %}
-<div class="space-y-6">
-    <div class="flex justify-between items-center">
-        <h2 class="text-3xl bebas teal-text tracking-widest">Content Calendar</h2>
-        <div class="flex items-center space-x-4">
-            <button class="bg-[#1A1A1A] border border-[#333] px-4 py-2 rounded text-xs uppercase hover:teal-text transition">Previous</button>
-            <span class="bebas text-xl">March 2025</span>
-            <button class="bg-[#1A1A1A] border border-[#333] px-4 py-2 rounded text-xs uppercase hover:teal-text transition">Next</button>
-            <button class="bg-[#008080] px-4 py-2 rounded text-white text-xs uppercase bebas tracking-widest ml-4">Regenerate Week</button>
-        </div>
-    </div>
-
-    <div class="card overflow-hidden">
-        <div class="grid grid-cols-7 bg-[#111] border-b border-[#333]">
-            {% for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
-            <div class="p-4 text-center text-[10px] uppercase tracking-widest text-gray-500 font-bold border-r border-[#333]">
-                {{ day }}
-            </div>
-            {% endfor %}
-        </div>
-        <div class="grid grid-cols-7 grid-rows-5 h-[600px]">
-            {% for i in range(1, 32) %}
-            <div class="p-2 border-r border-b border-[#333] hover:bg-teal-900/5 transition cursor-pointer group relative">
-                <span class="text-xs text-gray-600 group-hover:text-white transition">{{ i }}</span>
-                {% if i == 15 %}
-                <div class="mt-2 p-1 bg-[#008080]/20 border border-[#008080] rounded text-[9px] text-white">
-                    <span class="block font-bold">REEL</span>
-                    <span class="text-gray-400">Mumbai Rain Pro</span>
-                </div>
-                <div class="absolute inset-0 border-2 border-[#008080] pointer-events-none"></div>
-                {% elif i % 3 == 0 %}
-                <div class="mt-2 p-1 bg-gray-800 border border-gray-700 rounded text-[9px] text-gray-400">
-                    <span class="block font-bold">IMAGE</span>
-                    <span class="text-gray-500">Elite Raincoat</span>
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-            {% for i in range(4) %}
-            <div class="p-2 border-r border-b border-[#333] bg-[#050505]"></div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Legend -->
-    <div class="flex space-x-8 text-[10px] uppercase tracking-widest text-gray-500 justify-center py-4">
-        <div class="flex items-center space-x-2">
-            <div class="w-3 h-3 bg-[#008080]/20 border border-[#008080] rounded"></div>
-            <span>Posted / Approved</span>
-        </div>
-        <div class="flex items-center space-x-2">
-            <div class="w-3 h-3 bg-gray-800 border border-gray-700 rounded"></div>
-            <span>Scheduled</span>
-        </div>
-        <div class="flex items-center space-x-2">
-            <div class="w-3 h-3 border-2 border-[#008080] rounded"></div>
-            <span>Today</span>
-        </div>
-    </div>
-</div>
-{% endblock %}
+{% extends "base.html" %} 
+ {% block content %} 
+ <div class="p-6"> 
+     <div class="flex items-center justify-between mb-6"> 
+         <h1 class="text-3xl font-black text-white">📅 Content Calendar</h1> 
+         <div class="flex items-center gap-3"> 
+             <button onclick="prevMonth()" 
+                     class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"> 
+                 ← Prev 
+             </button> 
+             <h2 id="calendarTitle" class="text-xl font-bold text-white min-w-48 text-center"></h2> 
+             <button onclick="nextMonth()" 
+                     class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"> 
+                 Next → 
+             </button> 
+         </div> 
+     </div> 
+ 
+     <!-- Legend --> 
+     <div class="flex flex-wrap gap-3 mb-4 text-xs"> 
+         <span class="flex items-center gap-1.5 text-gray-400"> 
+             <span class="w-3 h-3 rounded-full bg-teal-500 inline-block"></span> Posted 
+         </span> 
+         <span class="flex items-center gap-1.5 text-gray-400"> 
+             <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span> Pending 
+         </span> 
+         <span class="flex items-center gap-1.5 text-gray-400"> 
+             <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> Approved 
+         </span> 
+         <span class="flex items-center gap-1.5 text-gray-400"> 
+             <span class="w-3 h-3 rounded-full bg-gray-500 inline-block"></span> Empty 
+         </span> 
+     </div> 
+ 
+     <!-- Calendar Grid --> 
+     <div id="calendarGrid" class="grid grid-cols-7 gap-1.5"></div> 
+ 
+     <!-- Day Detail Panel --> 
+     <div id="dayDetailPanel" 
+          class="hidden fixed right-0 top-0 h-full w-96 bg-gray-800 border-l border-gray-700 p-6 z-50 overflow-y-auto shadow-2xl"> 
+         <div class="flex justify-between items-center mb-6"> 
+             <h3 class="text-lg font-bold text-white">Post Details</h3> 
+             <button onclick="document.getElementById('dayDetailPanel').classList.add('hidden')" 
+                     class="text-gray-400 hover:text-white text-2xl leading-none">×</button> 
+         </div> 
+         <div id="dayDetailContent"></div> 
+     </div> 
+ </div> 
+ 
+ <script> 
+ let currentYear  = new Date().getFullYear(); 
+ let currentMonth = new Date().getMonth() + 1; 
+ 
+ const EMOJIS = { 
+     static:'📸', reel:'🎬', carousel:'📊', story:'📱', 
+     factory:'🏭', offer:'⚡', lifestyle:'🌊', social_proof:'⭐', weather:'🌧️' 
+ }; 
+ 
+ const STATUS_BORDER = { 
+     pending:        'border-yellow-500', 
+     approved:       'border-blue-500', 
+     posted:         'border-teal-500', 
+     skipped:        'border-red-500', 
+     needs_revision: 'border-orange-500', 
+ }; 
+ 
+ async function loadCalendar(year, month) { 
+     const data = await apiCall(`/api/calendar/${year}/${month}`); 
+     renderCalendar(year, month, data || []); 
+ } 
+ 
+ function renderCalendar(year, month, posts) { 
+     const grid  = document.getElementById('calendarGrid'); 
+     const title = document.getElementById('calendarTitle'); 
+     if (!grid) return; 
+ 
+     const monthNames = ['January','February','March','April','May','June', 
+                         'July','August','September','October','November','December']; 
+     if (title) title.textContent = `${monthNames[month-1]} ${year}`; 
+ 
+     const firstDay    = new Date(year, month-1, 1).getDay(); 
+     const daysInMonth = new Date(year, month, 0).getDate(); 
+     const today       = new Date(); 
+ 
+     const postsByDay = {}; 
+     posts.forEach(p => { 
+         const day = new Date(p.date).getDate(); 
+         if (!postsByDay[day]) postsByDay[day] = []; 
+         postsByDay[day].push(p); 
+     }); 
+ 
+     const dayHeaders = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; 
+     let html = dayHeaders.map(d => 
+         `<div class="text-center text-xs font-bold text-gray-500 py-2 uppercase tracking-wide">${d}</div>` 
+     ).join(''); 
+ 
+     const offset = firstDay === 0 ? 6 : firstDay - 1; 
+     for (let i = 0; i < offset; i++) { 
+         html += `<div class="min-h-24 rounded-xl bg-gray-800/20"></div>`; 
+     } 
+ 
+     for (let day = 1; day <= daysInMonth; day++) { 
+         const isToday  = day === today.getDate() && 
+                          month === today.getMonth()+1 && 
+                          year  === today.getFullYear(); 
+         const post     = (postsByDay[day] || [])[0]; 
+         const border   = isToday ? 'border-2 border-teal-400' : 
+                          post ? `border-2 ${STATUS_BORDER[post.status]||'border-gray-600'}` : 
+                          'border border-gray-700/50'; 
+         const emoji    = post ? (EMOJIS[post.post_type] || '📝') : ''; 
+ 
+         html += ` 
+             <div class="min-h-24 rounded-xl p-2 cursor-pointer 
+                         hover:border-teal-500 hover:bg-gray-700/50 transition-all 
+                         bg-gray-800/60 ${border}" 
+                  onclick="showDayDetail(${day})"> 
+                 <div class="flex justify-between items-start mb-1"> 
+                     <span class="text-sm font-bold ${isToday ? 'text-teal-400' : 'text-gray-300'}">${day}</span> 
+                     ${post ? `<span class="text-xs text-teal-400 font-bold">${(post.director_score||0).toFixed(1)}</span>` : ''} 
+                 </div> 
+                 ${emoji ? `<div class="text-xl text-center my-1">${emoji}</div>` : '<div class="my-4"></div>'} 
+                 ${post ? `<div class="text-xs text-gray-400 truncate">${post.product_name||''}</div>` : ''} 
+             </div>`; 
+     } 
+ 
+     grid.innerHTML = html; 
+ } 
+ 
+ let _calendarPosts = []; 
+ 
+ async function showDayDetail(day) { 
+     const data  = await apiCall(`/api/calendar/${currentYear}/${currentMonth}`); 
+     _calendarPosts = data || []; 
+     const posts = _calendarPosts.filter(p => new Date(p.date).getDate() === day); 
+     const panel = document.getElementById('dayDetailPanel'); 
+     const cont  = document.getElementById('dayDetailContent'); 
+     if (!panel || !cont) return; 
+ 
+     if (!posts.length) { 
+         cont.innerHTML = ` 
+             <div class="text-center py-8"> 
+                 <div class="text-5xl mb-4">📅</div> 
+                 <p class="text-gray-400 mb-2">No post for ${day}/${currentMonth}/${currentYear}</p> 
+                 <p class="text-gray-500 text-sm">Your AI team will create content based on the weekly rotation plan.</p> 
+             </div>`; 
+     } else { 
+         const post = posts[0]; 
+         cont.innerHTML = ` 
+             <div class="space-y-4"> 
+                 <div class="flex justify-between items-start"> 
+                     <h3 class="font-black text-white text-lg">${post.product_name}</h3> 
+                     <span class="text-3xl font-black text-teal-400">${(post.director_score||0).toFixed(1)}</span> 
+                 </div> 
+                 <span class="inline-block px-3 py-1 rounded-full text-xs font-medium 
+                     ${post.status==='posted' ? 'bg-teal-900/50 text-teal-300 border border-teal-700' : 
+                       post.status==='pending' ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700' : 
+                       'bg-gray-700 text-gray-300 border border-gray-600'}"> 
+                     ${(post.status||'unknown').toUpperCase()} 
+                 </span> 
+                 <div class="bg-gray-700/40 rounded-xl p-4"> 
+                     <p class="text-gray-300 text-sm leading-relaxed"> 
+                         ${(post.caption||'').substring(0,300)}... 
+                     </p> 
+                 </div> 
+                 ${post.director_note ? ` 
+                     <div class="bg-teal-900/20 border border-teal-700/40 rounded-xl p-3"> 
+                         <p class="text-teal-300 text-xs">🎬 ${post.director_note}</p> 
+                     </div>` : ''} 
+                 ${post.status === 'pending' ? ` 
+                     <div class="grid grid-cols-2 gap-2 mt-4"> 
+                         <button onclick="approveFromCal(${post.id})" 
+                                 class="py-2.5 bg-teal-700 hover:bg-teal-600 text-white rounded-xl text-sm font-bold"> 
+                             ✅ Approve 
+                         </button>
+                         <button onclick="skipFromCal(${post.id})" 
+                                 class="py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl text-sm font-bold"> 
+                             ⏭️ Skip 
+                         </button>
+                     </div>` : ''} 
+             </div>`; 
+     } 
+     panel.classList.remove('hidden'); 
+ } 
+ 
+ async function approveFromCal(id) { 
+     const data = await apiCall(`/api/posts/${id}/approve`, 'POST'); 
+     if (data?.success) { 
+         showAlert(data.message, 'success'); 
+         loadCalendar(currentYear, currentMonth); 
+         document.getElementById('dayDetailPanel')?.classList.add('hidden'); 
+     } 
+ } 
+ 
+ async function skipFromCal(id) { 
+     const data = await apiCall(`/api/posts/${id}/skip`, 'POST'); 
+     if (data?.success) { 
+         showAlert(data.message, 'warning'); 
+         loadCalendar(currentYear, currentMonth); 
+         document.getElementById('dayDetailPanel')?.classList.add('hidden'); 
+     } 
+ } 
+ 
+ function prevMonth() { 
+     currentMonth--; 
+     if (currentMonth < 1) { currentMonth = 12; currentYear--; } 
+     loadCalendar(currentYear, currentMonth); 
+ } 
+ 
+ function nextMonth() { 
+     currentMonth++; 
+     if (currentMonth > 12) { currentMonth = 1; currentYear++; } 
+     loadCalendar(currentYear, currentMonth); 
+ } 
+ 
+ loadCalendar(currentYear, currentMonth); 
+ </script> 
+ {% endblock %}

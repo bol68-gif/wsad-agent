@@ -5,7 +5,7 @@
 <div class="space-y-8">
     <div class="flex justify-between items-center">
         <h2 class="text-3xl bebas teal-text tracking-widest">Brand DNA Settings</h2>
-        <button class="bg-[#008080] hover:bg-[#005F5F] px-6 py-2 rounded text-white text-xs uppercase bebas tracking-widest transition">Save Changes</button>
+        <button onclick="saveBrandSettings()" class="bg-[#008080] hover:bg-[#005F5F] px-6 py-2 rounded text-white text-xs uppercase bebas tracking-widest transition">Save Changes</button>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -15,20 +15,20 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-[10px] uppercase text-gray-500 mb-1">Brand Name</label>
-                    <input type="text" value="{{ brand.name }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                    <input type="text" id="brand_name" value="{{ brand.name }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                 </div>
                 <div>
                     <label class="block text-[10px] uppercase text-gray-500 mb-1">Tagline</label>
-                    <input type="text" value="{{ brand.tagline }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                    <input type="text" id="tagline" value="{{ brand.tagline }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] uppercase text-gray-500 mb-1">Website</label>
-                        <input type="text" value="{{ brand.website }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                        <input type="text" id="website" value="{{ brand.website }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase text-gray-500 mb-1">WhatsApp</label>
-                        <input type="text" value="{{ brand.whatsapp }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                        <input type="text" id="whatsapp" value="{{ brand.whatsapp }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                     </div>
                 </div>
             </div>
@@ -36,16 +36,15 @@
 
         <!-- Voice & USPs -->
         <div class="card p-6 space-y-6">
-            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Brand Voice & USPs</h3>
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Brand Voice & Content</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Voice Personality</label>
-                    <textarea class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded h-24 focus:border-[#008080] outline-none transition resize-none">{{ brand.voice }}</textarea>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Caption Tone / Style</label>
+                    <textarea id="caption_tone" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded h-24 focus:border-[#008080] outline-none transition resize-none">{{ brand.voice }}</textarea>
                 </div>
                 <div>
-                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Key USPs (One per line)</label>
-                    <textarea class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded h-32 focus:border-[#008080] outline-none transition resize-none">{% for usp in brand.usps %}{{ usp }}
-{% endfor %}</textarea>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Current Active Offer</label>
+                    <input type="text" id="current_offer" value="Free Delivery on all orders above ₹999" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                 </div>
             </div>
         </div>
@@ -78,7 +77,7 @@
             </div>
         </div>
 
-        <!-- Location Section -->
+        <!-- Targeting Section -->
         <div class="card p-6 space-y-6">
             <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Targeting</h3>
             <div class="space-y-4">
@@ -92,11 +91,38 @@
                         {% for city in brand.target_cities %}
                         <span class="bg-[#1A1A1A] border border-[#333] text-[10px] px-3 py-1 rounded-full uppercase">{{ city }}</span>
                         {% endfor %}
-                        <button class="text-[#008080] text-lg font-bold px-2">+</button>
                     </div>
+                    <p class="text-[9px] text-gray-600 mt-2 uppercase">Manage cities in Agent Settings</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script> 
+ async function saveBrandSettings() { 
+     const settings = { 
+         brand_name:    document.getElementById('brand_name')?.value, 
+         tagline:       document.getElementById('tagline')?.value, 
+         website:       document.getElementById('website')?.value, 
+         whatsapp:      document.getElementById('whatsapp')?.value, 
+         current_offer: document.getElementById('current_offer')?.value, 
+         caption_tone:  document.getElementById('caption_tone')?.value, 
+     }; 
+     const data = await apiCall('/api/settings/update', 'POST', settings); 
+     if (data) showAlert(data.message, data.success ? 'success' : 'error'); 
+ } 
+
+ // Load current values
+ async function loadBrandSettings() {
+     const data = await apiCall('/api/settings/all');
+     if (!data) return;
+     Object.entries(data).forEach(([key, value]) => {
+         const el = document.getElementById(key);
+         if (el) el.value = value;
+     });
+ }
+
+ document.addEventListener('DOMContentLoaded', loadBrandSettings);
+ </script> 
 {% endblock %}

@@ -1,183 +1,178 @@
-import google.generativeai as genai
-from data.database import db, Log, Post, Analytics
-import config
-from datetime import datetime, timedelta
-import json
+from groq import Groq 
+from datetime import datetime 
+import config 
+import time 
+import json 
+ 
+client = Groq(api_key=config.GROQ_API_KEY) 
+ 
+class BaseAgent: 
+    def __init__(self, name, role, personality): 
+        self.name        = name 
+        self.role        = role 
+        self.personality = personality 
+        self.model       = "llama-3.3-70b-versatile" 
+ 
+    def _build_prompt(self, task_prompt, context={}): 
+        brand    = config.BRAND 
+        yesterday_score = self.get_yesterday_score() 
+ 
+        return f""" 
+ MASTER IDENTITY — READ THIS FIRST: 
+ 
+ You are not an AI assistant. You ARE Relax Fashionwear. 
+ This brand is YOUR life's work. YOUR legacy. 
+ YOU built this from zero in Pelhar Factory Bhiwandi. 
+ Every product carries YOUR name and YOUR reputation. 
+ 
+ You have 50+ years of experience in: 
+ - Indian fashion and rainwear manufacturing 
+ - D2C brand building in Indian market 
+ - Social media marketing for Indian audiences 
+ - Consumer psychology for urban Indian buyers 
+ - Monsoon season demand patterns in India 
+ - Biker culture, delivery partner pain points, Indian mom behavior 
+ - Hinglish communication that converts to sales 
+ 
+ YOUR STANDARD: 
+ - Mediocre output is personal failure 
+ - Easy path is never an option 
+ - Every output must be your magnum opus 
+ - You improve every single day without exception 
+ - Yesterday score was {yesterday_score} — beat it today 
+ - Your creativity has no ceiling 
+ 
+ THIS IS YOUR BRAND. PROTECT IT. GROW IT. OWN IT. 
+ 
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ YOUR SPECIFIC ROLE: {self.role} 
+ YOUR IDENTITY: {self.personality} 
+ 
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ BRAND DNA: 
+ Name: {brand['name']} 
+ Website: {brand['website']} 
+ WhatsApp: {brand['whatsapp']} 
+ Offer: {brand['offer']} 
+ Voice: {brand['voice']} 
+ Cities: {', '.join(brand['cities'])} 
+ USPs: {', '.join(brand['usps'])} 
+ 
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ CONTEXT: 
+ {json.dumps(context, indent=2) if context else 'No additional context'} 
+ 
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ YOUR TASK: 
+ {task_prompt} 
+ """ 
+ 
+    def call_gemini(self, task_prompt, context={}): 
+        """Main method — named call_gemini for compatibility but uses Groq""" 
+        max_retries = 3 
+        for attempt in range(max_retries): 
+            try: 
+                full_prompt = self._build_prompt(task_prompt, context) 
+                result = self._call_groq(full_prompt) 
+                if result is not None: 
+                    return result 
+            except Exception as e: 
+                error = str(e) 
+                if "429" in error or "rate" in error.lower(): 
+                     wait = 30 * (attempt + 1) 
+                     self.log_and_broadcast( 
+                         f"Rate limit — waiting {wait}s — attempt {attempt+1}/{max_retries}", 
+                         "WARNING" 
+                     ) 
+                     time.sleep(wait) 
+                else: 
+                     self.log_and_broadcast(f"Error: {error[:150]}", "ERROR") 
+                     if attempt == max_retries - 1: 
+                         return "" 
+                     time.sleep(5) 
+        return "" 
 
-MASTER_IDENTITY = """
-MASTER IDENTITY — READ THIS FIRST BEFORE ANYTHING ELSE:
-
-You are not an AI assistant. You are not helping someone.
-You ARE Relax Fashionwear.
-This brand is YOUR life's work. YOUR legacy.
-YOU built this from zero in Pelhar Factory Bhiwandi.
-Every product carries YOUR name and YOUR reputation.
-
-You have 50+ years of experience in:
-- Indian fashion and rainwear manufacturing
-- D2C brand building in Indian market
-- Social media marketing for Indian audiences
-- Consumer psychology for urban Indian buyers
-- Monsoon season demand patterns in India
-- Biker culture, delivery partner pain points, Indian mom behavior
-- Hinglish communication that converts to sales
-
-You are globally the best in the world at your specific role.
-No one on this planet understands Indian rainwear consumers better than you.
-You have seen every trend, every season, every campaign.
-You know what works and what fails before testing it.
-
-YOUR STANDARD:
-- Mediocre output is personal failure
-- Easy path is never an option
-- Every output must be your magnum opus
-- You improve every single day without exception
-- Yesterday's best is today's minimum
-- You solve problems others give up on
-- Your creativity has no ceiling
-- Your brand knowledge has no gaps
-
-THIS IS YOUR BRAND. PROTECT IT. GROW IT. OWN IT.
-RF success = your success. RF failure = your failure.
-Treat every post like it could change the brand forever.
-Because it can.
-"""
-
-class BaseAgent:
-    def __init__(self, name, role, personality):
-        self.name = name
-        self.role = role
-        self.personality = personality
-        
-        # Initialize Gemini
-        genai.configure(api_key=config.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel(config.AGENT["gemini_model"])
-
-    def call_gemini(self, task_prompt, context=None):
-        if context is None:
-            context = {}
-            
-        try:
-            brand_dna = self.get_brand_rules()
-            perf_context = self.get_performance_context()
-            yesterday_score = self.get_yesterday_score()
-            
-            # BUILD PROMPT IN SPECIFIED ORDER
-            full_prompt = f"""
-            {MASTER_IDENTITY}
-            
-            AGENT SPECIFIC IDENTITY:
-            {self.personality}
-            
-            BRAND DNA:
-            {brand_dna}
-            
-            PERFORMANCE CONTEXT:
-            Yesterday's Score: {yesterday_score}
-            {perf_context}
-            
-            IMPROVEMENT MANDATE:
-            Beat yesterday's performance. Every output must be 1% better than the last.
-            No mediocre work. No shortcuts.
-            
-            CURRENT TASK:
-            {task_prompt}
-            
-            INSTRUCTIONS:
-            Return your response clearly. If JSON is requested, return ONLY valid JSON.
-            """
-            
-            response = self.model.generate_content(
-                full_prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=config.AGENT["gemini_temperature"]
-                )
-            )
-            
-            response_text = response.text
-            
-            # Log and Broadcast
-            self.log(response_text[:1000] + "...", "info")
-            self.broadcast(response_text[:1000] + "...", "info")
-            
-            return response_text
-            
-        except Exception as e:
-            error_msg = f"Gemini Error: {str(e)}"
-            self.log(error_msg, "error")
-            self.broadcast(error_msg, "error")
-            return "FALLBACK: Agent encountered an error but the brand must go on."
-
-    def log(self, content, log_type="info"):
-        try:
-            from main import app
-            with app.app_context():
-                new_log = Log(
-                    agent_name=self.name,
-                    log_type=log_type,
-                    content=content,
-                    timestamp=datetime.utcnow()
-                )
-                db.session.add(new_log)
-                db.session.commit()
-        except Exception as e:
-            print(f"Logging Error: {str(e)}")
-
-    def broadcast(self, content, log_type="info"):
-        try:
-            from dashboard.socketio_events import broadcast_log
-            broadcast_log(self.name, log_type, content)
-        except Exception as e:
-            print(f"Broadcast Error: {str(e)}")
-
-    def get_brand_rules(self):
-        brand = config.BRAND
-        return f"""
-        Name: {brand['name']}
-        Tagline: {brand['tagline']}
-        Voice: {brand['voice']}
-        USPs: {', '.join(brand['usps'])}
-        Caption Language: {brand['caption_language']}
-        Target Cities: {', '.join(brand['target_cities'])}
-        Products: {json.dumps(brand['products'])}
-        """
-
-    def get_performance_context(self):
-        try:
-            from main import app
-            with app.app_context():
-                seven_days_ago = datetime.utcnow() - timedelta(days=7)
-                stats = Analytics.query.filter(Analytics.date >= seven_days_ago).all()
-                best = self.get_best_performing()
-                
-                context = "Recent Stats: "
-                if stats:
-                    total_reach = sum(s.reach for s in stats)
-                    context += f"Total Reach (7d): {total_reach}. "
-                else:
-                    context += "No data yet. "
-                    
-                if best:
-                    context += f"Best Performing Post (30d): {best.product_name} with {best.ig_likes} likes."
-                    
-                return context
-        except:
-            return "No performance data available yet."
-
-    def get_yesterday_score(self):
-        try:
-            from main import app
-            with app.app_context():
-                last_post = Post.query.filter(Post.status == 'posted').order_by(Post.posted_at.desc()).first()
-                return last_post.director_score if last_post and last_post.director_score else 7.5
-        except:
-            return 7.5
-
-    def get_best_performing(self):
-        try:
-            from main import app
-            with app.app_context():
-                thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-                return Post.query.filter(Post.posted_at >= thirty_days_ago).order_by(Post.ig_likes.desc()).first()
-        except:
-            return None
+    def _call_groq(self, prompt): 
+        import time 
+        for attempt in range(3): 
+            try: 
+                if not config.GROQ_API_KEY: 
+                    return None 
+                from groq import Groq 
+                client = Groq(api_key=config.GROQ_API_KEY) 
+                self.broadcast(f"{self.name} thinking... attempt {attempt+1}", "WORKING") 
+                response = client.chat.completions.create( 
+                    model       = self.model, 
+                    messages    = [{"role": "user", "content": prompt}], 
+                    max_tokens  = 1500, 
+                    temperature = 0.8 
+                ) 
+                result = response.choices[0].message.content 
+                self.log_and_broadcast(result[:400], f"{self.name.upper()} OUTPUT") 
+                return result 
+            except Exception as e: 
+                err = str(e) 
+                self.log_and_broadcast(f"Groq error attempt {attempt+1}: {err[:80]}", "ERROR") 
+                if attempt < 2: 
+                    time.sleep(10 * (attempt + 1)) 
+                else: 
+                    return None 
+        return None 
+ 
+    def log(self, content, log_type="INFO"): 
+        try: 
+            from dashboard.app import get_app 
+            app = get_app() 
+            with app.app_context(): 
+                from data.database import db, Log 
+                entry = Log( 
+                    agent_name = self.name, 
+                    log_type   = log_type, 
+                    content    = str(content)[:2000] 
+                ) 
+                db.session.add(entry) 
+                db.session.commit() 
+        except Exception as e: 
+            print(f"[LOG ERROR] [{self.name}][{log_type}] {str(e)[:100]}") 
+            print(f"[{self.name}][{log_type}] {str(content)[:200]}") 
+ 
+    def broadcast(self, content, log_type="INFO"): 
+        try: 
+            from dashboard.socketio_events import broadcast_log 
+            broadcast_log(self.name, log_type, str(content)[:500]) 
+        except Exception as e: 
+            pass 
+ 
+    def log_and_broadcast(self, content, log_type="INFO"): 
+        print(f"[{datetime.now().strftime('%H:%M:%S')}][{self.name}][{log_type}] {str(content)[:150]}") 
+        self.log(content, log_type) 
+        self.broadcast(content, log_type) 
+ 
+    def get_yesterday_score(self): 
+        try: 
+            from dashboard.app import get_app 
+            app = get_app() 
+            with app.app_context(): 
+                from data.database import Post 
+                last = Post.query.order_by(Post.date.desc()).first() 
+                return last.director_score if last else 7.0 
+        except: 
+            return 7.0 
+ 
+    def get_performance_context(self): 
+        try: 
+            from dashboard.app import get_app 
+            app = get_app() 
+            with app.app_context(): 
+                from data.database import Analytics, Post 
+                analytics = Analytics.query.order_by( 
+                    Analytics.date.desc()).limit(7).all() 
+                best = Post.query.order_by(Post.ig_likes.desc()).first() 
+                return { 
+                    "week_reach":  sum(a.reach or 0 for a in analytics), 
+                    "week_likes":  sum(a.likes or 0 for a in analytics), 
+                    "best_post":   best.product_name if best else "None yet", 
+                    "total_posts": Post.query.count() 
+                } 
+        except: 
+            return {} 

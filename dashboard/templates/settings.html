@@ -5,7 +5,13 @@
 <div class="space-y-8">
     <div class="flex justify-between items-center">
         <h2 class="text-3xl bebas teal-text tracking-widest">Agent System Settings</h2>
-        <button class="bg-[#008080] hover:bg-[#005F5F] px-6 py-2 rounded text-white text-xs uppercase bebas tracking-widest transition">Save Config</button>
+        <div class="flex items-center gap-4">
+            <div id="agentStatusContainer" class="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-[#333] rounded-lg">
+                <span id="agentStatusDot" class="w-3 h-3 rounded-full bg-teal-400 animate-pulse"></span>
+                <span id="agentStatusText" class="text-teal-400 font-bold text-sm tracking-widest">RUNNING</span>
+            </div>
+            <button onclick="saveAgentSettings()" class="bg-[#008080] hover:bg-[#005F5F] px-6 py-2 rounded text-white text-xs uppercase bebas tracking-widest transition">Save Config</button>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -15,28 +21,11 @@
             <div class="grid grid-cols-2 gap-6">
                 <div>
                     <label class="block text-[10px] uppercase text-gray-500 mb-1">Morning Post</label>
-                    <input type="time" value="{{ agent.morning_post_time }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                    <input type="time" id="morning_post_time" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                 </div>
                 <div>
                     <label class="block text-[10px] uppercase text-gray-500 mb-1">Evening Post</label>
-                    <input type="time" value="{{ agent.evening_post_time }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Story Time</label>
-                    <input type="time" value="{{ agent.story_time }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase text-gray-500 mb-2">Platforms</label>
-                    <div class="flex items-center space-x-4">
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" checked class="w-4 h-4 rounded bg-[#0A0A0A] border-[#333] text-[#008080] focus:ring-0">
-                            <span class="text-xs uppercase">IG</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" checked class="w-4 h-4 rounded bg-[#0A0A0A] border-[#333] text-[#008080] focus:ring-0">
-                            <span class="text-xs uppercase">FB</span>
-                        </label>
-                    </div>
+                    <input type="time" id="evening_post_time" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                 </div>
             </div>
         </div>
@@ -46,37 +35,78 @@
             <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Director AI Logic</h3>
             <div class="space-y-6">
                 <div>
-                    <div class="flex justify-between mb-2">
-                        <label class="text-[10px] uppercase text-gray-500">Minimum Approval Score</label>
-                        <span class="text-xs font-bold teal-text">{{ agent.director_min_score }} / 10</span>
-                    </div>
-                    <input type="range" min="0" max="10" step="0.1" value="{{ agent.director_min_score }}" class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#008080]">
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Minimum Approval Score (0-10)</label>
+                    <input type="number" id="director_min_score" step="0.1" min="0" max="10" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                 </div>
                 <div>
                     <label class="block text-[10px] uppercase text-gray-500 mb-1">Max Revision Attempts</label>
-                    <input type="number" value="{{ agent.max_revision_attempts }}" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                    <input type="number" id="max_revisions" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                 </div>
             </div>
         </div>
 
-        <!-- Gemini Settings -->
+        <!-- Weather Engine -->
         <div class="card p-6 space-y-6">
-            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Gemini AI Model</h3>
-            <div class="space-y-4">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">Weather & Location</h3>
+            <div class="space-y-6">
                 <div>
-                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Active Model</label>
-                    <select class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
-                        <option value="gemini-1.5-pro" selected>{{ agent.gemini_model }}</option>
-                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                    </select>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-1">Rain Threshold (mm)</label>
+                    <input type="number" id="rain_threshold" class="w-full bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
                 </div>
                 <div>
-                    <div class="flex justify-between mb-2">
-                        <label class="text-[10px] uppercase text-gray-500">Temperature (Creativity)</label>
-                        <span class="text-xs font-bold teal-text">{{ agent.gemini_temperature }}</span>
+                    <label class="block text-[10px] uppercase text-gray-500 mb-2">Target Cities</label>
+                    <div id="citiesContainer" class="flex flex-wrap gap-2 mb-4">
+                        <!-- Cities will be rendered here -->
                     </div>
-                    <input type="range" min="0" max="1" step="0.1" value="{{ agent.gemini_temperature }}" class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#008080]">
+                    <div class="flex gap-2">
+                        <input type="text" id="newCityInput" placeholder="Add city (e.g. Mumbai)" class="flex-1 bg-[#0A0A0A] border border-[#333] text-sm p-3 rounded focus:border-[#008080] outline-none transition">
+                        <button onclick="addCity()" class="bg-[#1A1A1A] border border-[#333] px-4 py-2 rounded text-xs hover:text-white transition">Add</button>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Telegram Test Section -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">📱 Telegram Bot</h3>
+            <div class="flex gap-3 flex-wrap">
+                <button onclick="testTelegram()"
+                        class="px-4 py-3 bg-[#1A1A1A] border border-[#333] hover:border-teal-600 text-white rounded text-[10px] font-bold uppercase tracking-widest transition">
+                    📨 Send Test Message
+                </button>
+                <button onclick="testPostPreview()"
+                        class="px-4 py-3 bg-[#1A1A1A] border border-[#333] hover:border-blue-600 text-white rounded text-[10px] font-bold uppercase tracking-widest transition">
+                    📸 Send Test Post Preview
+                </button>
+            </div>
+            <p class="text-gray-500 text-[9px] uppercase tracking-tighter">
+                Sends test messages to your Telegram account to verify the bot is working.
+            </p>
+        </div>
+
+        <!-- Scheduler Control Section -->
+        <div class="card p-6 space-y-6">
+            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">⏰ Scheduler Control</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="runJob('morning_brief')"
+                        class="px-4 py-3 bg-[#1A1A1A] border border-[#333] hover:border-teal-600 text-white rounded text-[10px] font-bold uppercase tracking-widest transition">
+                    🧠 Morning Brief
+                </button>
+                <button onclick="runJob('content_creation')"
+                        class="px-4 py-3 bg-[#1A1A1A] border border-[#333] hover:border-teal-600 text-white rounded text-[10px] font-bold uppercase tracking-widest transition">
+                    🎨 Content Creation
+                </button>
+                <button onclick="runJob('weather_check')"
+                        class="px-4 py-3 bg-[#1A1A1A] border border-[#333] hover:border-blue-600 text-white rounded text-[10px] font-bold uppercase tracking-widest transition">
+                    🌧️ Weather Check
+                </button>
+                <button onclick="runJob('auto_post')"
+                        class="px-4 py-3 bg-[#1A1A1A] border border-[#333] hover:border-green-600 text-white rounded text-[10px] font-bold uppercase tracking-widest transition">
+                    🚀 Auto Post
+                </button>
+            </div>
+            <div id="schedulerJobs" class="mt-4 space-y-2 max-h-40 overflow-y-auto pr-2">
+                <!-- Jobs will be rendered here -->
             </div>
         </div>
 
@@ -84,16 +114,142 @@
         <div class="card p-6 space-y-6">
             <h3 class="text-[10px] uppercase tracking-widest text-gray-500">System Controls</h3>
             <div class="grid grid-cols-2 gap-4 pt-2">
-                <button class="bg-[#1A1A1A] border border-[#333] hover:border-red-500 text-red-500 text-[10px] font-bold py-3 rounded uppercase transition tracking-widest">Pause Agent</button>
-                <button class="bg-[#1A1A1A] border border-[#333] hover:border-blue-500 text-blue-500 text-[10px] font-bold py-3 rounded uppercase transition tracking-widest">Restart Team</button>
-                <div class="col-span-2 p-3 bg-teal-900/10 rounded flex justify-between items-center">
-                    <span class="text-[10px] uppercase text-gray-400">Improvement Mode</span>
-                    <div class="w-8 h-4 bg-[#008080] rounded-full relative">
-                        <div class="w-2 h-2 bg-white rounded-full absolute right-1 top-1"></div>
-                    </div>
-                </div>
+                <button onclick="pauseAgent()" class="bg-[#1A1A1A] border border-[#333] hover:border-red-500 text-red-500 text-[10px] font-bold py-3 rounded uppercase transition tracking-widest">Pause Agent</button>
+                <button onclick="resumeAgent()" class="bg-[#1A1A1A] border border-[#333] hover:border-teal-500 text-teal-500 text-[10px] font-bold py-3 rounded uppercase transition tracking-widest">Resume Agent</button>
             </div>
         </div>
     </div>
 </div>
+
+<script> 
+ async function pauseAgent() { 
+     const data = await apiCall('/api/settings/pause_agent', 'POST'); 
+     if (data && data.success) { 
+         showAlert(data.message, 'warning'); 
+         updateAgentStatus('paused'); 
+     } 
+ } 
+ 
+ async function resumeAgent() { 
+     const data = await apiCall('/api/settings/resume_agent', 'POST'); 
+     if (data && data.success) { 
+         showAlert(data.message, 'success'); 
+         updateAgentStatus('running'); 
+     } 
+ } 
+ 
+ function updateAgentStatus(status) { 
+     const dot  = document.getElementById('agentStatusDot'); 
+     const text = document.getElementById('agentStatusText'); 
+     if (dot && text) { 
+         if (status === 'running') { 
+             dot.className  = 'w-3 h-3 rounded-full bg-teal-400 animate-pulse'; 
+             text.textContent = 'RUNNING'; 
+             text.className = 'text-teal-400 font-bold'; 
+         } else { 
+             dot.className  = 'w-3 h-3 rounded-full bg-yellow-400'; 
+             text.textContent = 'PAUSED'; 
+             text.className = 'text-yellow-400 font-bold'; 
+         } 
+     } 
+ } 
+ 
+ async function saveAgentSettings() { 
+     const settings = {}; 
+     const fields = ['director_min_score','max_revisions', 
+                     'morning_post_time','evening_post_time','rain_threshold']; 
+     fields.forEach(f => { 
+         const el = document.getElementById(f); 
+         if (el) settings[f] = el.value; 
+     }); 
+     const data = await apiCall('/api/settings/update', 'POST', settings); 
+     if (data) showAlert(data.message, data.success ? 'success' : 'error'); 
+ } 
+ 
+ async function addCity() { 
+     const input = document.getElementById('newCityInput'); 
+     if (!input || !input.value.trim()) { 
+         showAlert('Enter a city name', 'error'); 
+         return; 
+     } 
+     const data = await apiCall('/api/settings/add_city', 'POST', 
+                                {city: input.value.trim()}); 
+     if (data && data.success) { 
+         input.value = ''; 
+         renderCities(data.cities); 
+         showAlert(data.message, 'success'); 
+     } else if (data) { 
+         showAlert(data.message, 'warning'); 
+     } 
+ } 
+ 
+ async function removeCity(city) { 
+     const data = await apiCall('/api/settings/remove_city', 'POST', {city}); 
+     if (data && data.success) { 
+         renderCities(data.cities); 
+         showAlert(data.message, 'success'); 
+     } 
+ } 
+ 
+ function renderCities(cities) { 
+     const container = document.getElementById('citiesContainer'); 
+     if (!container) return; 
+     container.innerHTML = cities.map(c => ` 
+         <span class="inline-flex items-center gap-2 bg-teal-900/40 border border-teal-600/50 text-teal-300 px-3 py-1.5 rounded-full text-sm"> 
+             📍 ${c} 
+             <button onclick="removeCity('${c}')" 
+                     class="text-red-400 hover:text-red-300 font-bold text-base leading-none">×</button> 
+         </span> 
+     `).join(''); 
+ } 
+ 
+ // Load current settings on page load 
+ async function loadCurrentSettings() { 
+     const data = await apiCall('/api/settings/all'); 
+     if (!data) return; 
+     Object.entries(data).forEach(([key, value]) => { 
+         const el = document.getElementById(key); 
+         if (el) el.value = value; 
+     }); 
+     if (data.target_cities) { 
+         renderCities(data.target_cities.split(',')); 
+     } 
+     if (data.agent_status) { 
+         updateAgentStatus(data.agent_status); 
+     } 
+ } 
+ 
+ async function testTelegram() { 
+     const data = await apiCall('/api/test/telegram', 'POST'); 
+     if (data) showAlert(data.message, data.success ? 'success' : 'error'); 
+ } 
+ 
+ async function testPostPreview() { 
+     const data = await apiCall('/api/test/post_preview', 'POST'); 
+     if (data) showAlert(data.message, data.success ? 'success' : 'error'); 
+ } 
+ 
+ async function runJob(jobName) { 
+     const data = await apiCall(`/api/scheduler/run_now/${jobName}`, 'POST'); 
+     if (data) showAlert(data.message, data.success ? 'success' : 'error'); 
+ } 
+ 
+ async function loadSchedulerStatus() { 
+     const data = await apiCall('/api/scheduler/status'); 
+     if (data && data.jobs) { 
+         const container = document.getElementById('schedulerJobs'); 
+         if (container) { 
+             container.innerHTML = data.jobs.map(j => ` 
+                 <div class="flex justify-between items-center py-2 border-b border-[#222]"> 
+                     <span class="text-gray-500 text-[10px] font-mono uppercase tracking-widest">${j.id}</span> 
+                     <span class="text-teal-400 text-[9px] font-bold">${j.next_run}</span> 
+                 </div> 
+             `).join(''); 
+         } 
+     } 
+ } 
+ 
+ loadCurrentSettings(); 
+ loadSchedulerStatus();
+ </script> 
 {% endblock %}

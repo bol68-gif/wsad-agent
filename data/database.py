@@ -3,6 +3,46 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+class Product(db.Model): 
+    __tablename__    = "products" 
+    id               = db.Column(db.Integer, primary_key=True) 
+    name             = db.Column(db.String(200), nullable=False) 
+    category         = db.Column(db.String(100)) 
+    price            = db.Column(db.Integer, default=0) 
+    stock            = db.Column(db.Integer, default=0) 
+    description      = db.Column(db.Text) 
+    features         = db.Column(db.Text) 
+    target_persona   = db.Column(db.String(300)) 
+    pain_points      = db.Column(db.Text) 
+    website_url      = db.Column(db.String(500)) 
+    priority         = db.Column(db.String(50), default="medium") 
+    active           = db.Column(db.Boolean, default=True) 
+    primary_image    = db.Column(db.String(500)) 
+    all_images       = db.Column(db.Text) 
+    post_count       = db.Column(db.Integer, default=0) 
+    avg_engagement   = db.Column(db.Float, default=0.0) 
+    created_at       = db.Column(db.DateTime, default=datetime.utcnow) 
+    scraped_at       = db.Column(db.DateTime) 
+
+    def to_dict(self): 
+        return { 
+            "id":            self.id, 
+            "name":          self.name, 
+            "category":      self.category, 
+            "price":         self.price, 
+            "stock":         self.stock, 
+            "description":   self.description, 
+            "features":      self.features, 
+            "target_persona":self.target_persona, 
+            "website_url":   self.website_url, 
+            "priority":      self.priority, 
+            "active":        self.active, 
+            "primary_image": self.primary_image, 
+            "all_images":    self.all_images, 
+            "post_count":    self.post_count, 
+            "avg_engagement":self.avg_engagement, 
+        } 
+
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime, default=datetime.utcnow)
@@ -38,6 +78,19 @@ class Post(db.Model):
 
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+class Settings(db.Model): 
+    __tablename__ = "settings" 
+    id         = db.Column(db.Integer, primary_key=True) 
+    key        = db.Column(db.String(200), unique=True, nullable=False) 
+    value      = db.Column(db.Text) 
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow) 
+
+    def to_dict(self): 
+        return { 
+            "key":   self.key, 
+            "value": self.value 
+        }
 
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True)

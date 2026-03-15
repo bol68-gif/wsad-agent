@@ -29,7 +29,7 @@ BRAND = {
         "headline": "Bebas Neue",
         "body": "Montserrat",
     },
-    "target_cities": ["Mumbai", "Pune", "Bangalore", "Delhi", "Chennai", "Hyderabad"],
+    "cities": ["Mumbai", "Pune", "Bangalore", "Delhi", "Chennai", "Hyderabad"],
     "voice": "Bold, direct, Hinglish, never corporate, never generic",
     "usps": [
         "Heat sealed seams — zero needle holes",
@@ -51,6 +51,7 @@ BRAND = {
 
 # -- API KEYS ------------------------------------------
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 INSTAGRAM_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
@@ -72,7 +73,7 @@ AGENT = {
     "director_min_score": 8.5,
     "max_revision_attempts": 3,
     "max_gemini_calls_per_day": 20,
-    "gemini_model": "gemini-1.5-pro",
+    "gemini_model": "gemini-2.0-flash",
     "gemini_temperature": 0.8,
     "morning_post_time": "08:30",
     "evening_post_time": "20:30",

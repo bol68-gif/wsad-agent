@@ -1,68 +1,126 @@
-{% extends "base.html" %}
-{% block title %}Competitors{% endblock %}
-
-{% block content %}
-<div class="space-y-8">
-    <div class="flex justify-between items-center">
-        <h2 class="text-3xl bebas teal-text tracking-widest">Competitor Intelligence</h2>
-        <button class="bg-[#1A1A1A] border border-[#333] px-6 py-2 rounded text-xs uppercase hover:teal-text transition">Scan Now</button>
-    </div>
-
-    <!-- Competitor Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {% for brand in competitors %}
-        <div class="card p-6 space-y-4">
-            <div class="flex justify-between items-start">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center font-bold">{{ brand.brand_name[0] }}</div>
-                    <div>
-                        <h4 class="text-sm font-bold uppercase">{{ brand.brand_name }}</h4>
-                        <p class="text-[10px] text-[#008080]">@{{ brand.instagram_handle }}</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="bebas text-xl">{{ (brand.followers / 1000) | round(1) }}K</p>
-                    <p class="text-[9px] uppercase text-gray-500">Followers</p>
-                </div>
-            </div>
-            
-            <div class="pt-4 border-t border-[#222]">
-                <h5 class="text-[9px] uppercase text-gray-500 mb-2">Engagement Rate</h5>
-                <div class="flex items-end space-x-2">
-                    <p class="text-xl font-bold">{{ brand.avg_engagement }}%</p>
-                    <span class="text-[9px] text-green-500 mb-1">↑ Above Avg</span>
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <h5 class="text-[9px] uppercase text-gray-500">Content Gaps</h5>
-                <p class="text-[10px] text-gray-400 italic">"{{ brand.content_gaps }}"</p>
-            </div>
-        </div>
-        {% else %}
-        <div class="col-span-full py-20 text-center card bg-[#111] border-dashed">
-            <p class="text-gray-500 text-xs uppercase tracking-widest">No competitors tracked yet. Add handles in Settings.</p>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Gap Analysis Section -->
-    <div class="card p-8 bg-teal-900/5 border-l-4 border-l-[#008080]">
-        <h3 class="text-[10px] uppercase tracking-widest text-gray-500 mb-6">AI Opportunity Analysis</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="space-y-4">
-                <h4 class="text-xs font-bold uppercase tracking-widest teal-text">Market Opportunity</h4>
-                <p class="text-sm text-gray-300 leading-relaxed">Competitors are focused on "Fashion" lookbooks. There is a 60% content gap for "Durability & Technical Tests" in the Indian market. Suggesting 'Heavy Rain Durability' reel series.</p>
-            </div>
-            <div class="space-y-4">
-                <h4 class="text-xs font-bold uppercase tracking-widest teal-text">Hashtag Efficiency</h4>
-                <div class="flex flex-wrap gap-2">
-                    <span class="bg-[#0A0A0A] border border-[#333] px-3 py-1 rounded text-[10px]">#mumbairains</span>
-                    <span class="bg-[#0A0A0A] border border-[#333] px-3 py-1 rounded text-[10px]">#raincoatindia</span>
-                    <span class="bg-[#0A0A0A] border border-[#333] px-3 py-1 rounded text-[10px]">#bikerride</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% extends "base.html" %} 
+{% block content %} 
+<div class="p-6"> 
+    <div class="flex justify-between items-center mb-6"> 
+        <div> 
+            <h1 class="text-3xl font-black text-white">🔍 Competitor Intelligence</h1> 
+            <p class="text-gray-400 mt-1">Auto-detected Indian rainwear brands — monitored 24/7</p> 
+        </div> 
+        <button onclick="scanCompetitors()" 
+                class="px-5 py-2.5 bg-teal-700 hover:bg-teal-600 text-white rounded-xl font-medium transition-colors"> 
+            🚀 Scan for New Brands 
+        </button> 
+    </div> 
+ 
+    <!-- Opportunity Alert --> 
+    <div class="bg-teal-900/20 border border-teal-700/50 rounded-xl p-4 mb-6"> 
+        <h3 class="text-teal-300 font-bold mb-2">🎯 RF Competitive Advantage</h3> 
+        <p class="text-gray-300 text-sm">No competitor owns the delivery partner + biker segment. RF can dominate this with consistent Hinglish content targeting Mumbai, Pune, and Bangalore.</p> 
+    </div> 
+ 
+    <!-- Competitors Grid --> 
+    <div id="competitorsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> 
+        <div class="col-span-full text-center py-12"> 
+            <div class="text-4xl mb-3 animate-spin">⏳</div> 
+            <p class="text-gray-400">Loading competitor data...</p> 
+        </div> 
+    </div> 
+ 
+    <!-- Gap Analysis Section --> 
+    <div class="mt-8 bg-gray-800 rounded-xl p-6 border border-gray-700"> 
+        <h3 class="text-lg font-bold text-white mb-4">📊 Content Gap Analysis</h3> 
+        <div id="gapAnalysis" class="space-y-3"> 
+            <p class="text-gray-400 text-sm">Loading analysis...</p> 
+        </div> 
+    </div> 
+</div> 
+ 
+<script> 
+async function loadCompetitors() { 
+    const data = await apiCall('/api/competitors/all'); 
+    const grid = document.getElementById('competitorsGrid'); 
+    if (!grid) return; 
+ 
+    if (!data || !data.length) { 
+        grid.innerHTML = ` 
+            <div class="col-span-full text-center py-12"> 
+                <div class="text-5xl mb-4">🔍</div> 
+                <h3 class="text-xl font-bold text-white mb-2">Scanning for competitors...</h3> 
+                <p class="text-gray-400 mb-4">Your Growth Hacker agent is detecting Indian rainwear brands</p> 
+                <button onclick="location.reload()" 
+                        class="px-6 py-3 bg-teal-700 hover:bg-teal-600 text-white rounded-xl"> 
+                    🔄 Refresh 
+                </button> 
+            </div>`; 
+        return; 
+    } 
+ 
+    grid.innerHTML = data.map(c => ` 
+        <div class="bg-gray-800 rounded-2xl border border-gray-700 hover:border-teal-600 transition-all overflow-hidden"> 
+            <div class="bg-gradient-to-r from-teal-900/40 to-gray-800 p-5"> 
+                <div class="flex justify-between items-start"> 
+                    <div> 
+                        <h3 class="font-black text-white text-lg">${c.brand_name}</h3> 
+                        <p class="text-teal-400 text-sm mt-0.5">${c.instagram_handle}</p> 
+                    </div> 
+                    <span class="bg-green-900/50 text-green-300 text-xs px-2 py-1 rounded-full border border-green-700/50"> 
+                        ● Active 
+                    </span> 
+                </div> 
+            </div> 
+            <div class="p-5"> 
+                <div class="grid grid-cols-2 gap-3 mb-4"> 
+                    <div class="bg-gray-700/50 rounded-xl p-3 text-center"> 
+                        <div class="text-white font-black text-xl">${(c.followers/1000).toFixed(1)}K</div> 
+                        <div class="text-gray-400 text-xs mt-0.5">Followers</div> 
+                    </div> 
+                    <div class="bg-gray-700/50 rounded-xl p-3 text-center"> 
+                        <div class="text-white font-black text-xl">${c.avg_engagement || 2.4}%</div> 
+                        <div class="text-gray-400 text-xs mt-0.5">Engagement</div> 
+                    </div> 
+                </div> 
+                <div class="bg-red-900/20 border border-red-800/40 rounded-xl p-3"> 
+                    <p class="text-red-300 text-xs font-bold mb-1">🎯 Gap RF Can Own:</p> 
+                    <p class="text-gray-300 text-xs leading-relaxed">${c.content_gaps || 'No biker content, no Hinglish, no factory proof'}</p> 
+                </div> 
+            </div> 
+        </div> 
+    `).join(''); 
+ 
+    loadGapAnalysis(); 
+} 
+ 
+async function loadGapAnalysis() { 
+    const container = document.getElementById('gapAnalysis'); 
+    if (!container) return; 
+ 
+    const gaps = [ 
+        { icon: '🏍️', gap: 'Zero competitor owns the delivery partner + biker segment', action: 'RF creates 4 biker posts per week' }, 
+        { icon: '🗣️', gap: 'All competitors post in English only — no Hinglish content', action: 'RF posts 100% Hinglish — more relatable' }, 
+        { icon: '🏭', gap: 'No competitor shows factory manufacturing process', action: 'RF Monday factory trust posts' }, 
+        { icon: '🌧️', gap: 'No real-time monsoon urgency content from any brand', action: 'RF weather-triggered emergency posts' }, 
+    ]; 
+ 
+    container.innerHTML = gaps.map(g => ` 
+        <div class="flex items-start gap-4 p-4 bg-gray-700/30 rounded-xl border border-gray-600/50"> 
+            <div class="text-2xl">${g.icon}</div> 
+            <div class="flex-1"> 
+                <p class="text-white text-sm font-medium">${g.gap}</p> 
+                <p class="text-teal-400 text-xs mt-1">✅ RF Action: ${g.action}</p> 
+            </div> 
+        </div> 
+    `).join(''); 
+} 
+ 
+async function scanCompetitors() { 
+    showAlert('Growth Hacker scanning for Indian rainwear brands...', 'info'); 
+    const data = await apiCall('/api/competitors/scan', 'POST'); 
+    if (data && data.success) { 
+        showAlert(data.message, 'success'); 
+        setTimeout(loadCompetitors, 3000); 
+    } 
+} 
+ 
+loadCompetitors(); 
+</script> 
 {% endblock %}

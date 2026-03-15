@@ -1,107 +1,353 @@
 {% extends "base.html" %}
-{% block title %}Live Activity Logs{% endblock %}
+{% block title %}Live Logs{% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-8 h-[calc(100vh-180px)]">
-    <!-- Left Panel: Agent Status -->
-    <div class="lg:col-span-1 space-y-4 overflow-y-auto pr-2">
-        <h3 class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-4">AI Team Status</h3>
-        {% for agent in ['Director', 'Strategist', 'Copywriter', 'Designer', 'Analyst', 'Growth Hacker'] %}
-        <div class="card p-4 flex items-center justify-between border-l-2 {% if agent == 'Copywriter' %}border-l-[#008080] bg-teal-900/5{% else %}border-l-gray-700{% endif %}">
-            <div class="flex items-center space-x-3">
-                <div class="w-2 h-2 rounded-full {% if agent == 'Copywriter' %}bg-[#008080] animate-pulse{% else %}bg-gray-600{% endif %}"></div>
-                <span class="text-xs font-bold uppercase tracking-tighter">{{ agent }}</span>
-            </div>
-            <span class="text-[9px] text-gray-500">{% if agent == 'Copywriter' %}WRITING{% else %}IDLE{% endif %}</span>
-        </div>
-        {% endfor %}
-        
-        <div class="mt-8 p-4 bg-red-900/10 border border-red-900/30 rounded-lg">
-            <h4 class="text-[10px] uppercase text-red-500 mb-2">System Health</h4>
-            <div class="flex items-center justify-between text-[10px]">
-                <span>API Status</span>
-                <span class="text-green-500">OPERATIONAL</span>
-            </div>
-        </div>
+<div style="display:flex;gap:16px;height:calc(100vh - 140px)">
+
+  <!-- LEFT PANEL -->
+  <div style="width:220px;flex-shrink:0;overflow-y:auto">
+    <p style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">AI Team</p>
+
+    {% for key, emoji, label in [('strategist','🧠','Strategist'),('copywriter','✍️','Copywriter'),('designer','🎨','Designer'),('director','🎬','Director'),('analyst','📊','Analyst'),('growth_hacker','🚀','Growth Hacker')] %}
+    <div id="agent_{{key}}" onclick="selectAgent('{{key}}')"
+         style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:10px;margin-bottom:6px;cursor:pointer;transition:border-color 0.2s">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;font-weight:bold;color:#fff">{{emoji}} {{label}}</span>
+        <span id="status_{{key}}" style="font-size:9px;color:#555">IDLE</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+        <div id="dot_{{key}}" style="width:6px;height:6px;border-radius:50%;background:#333;flex-shrink:0"></div>
+        <span id="task_{{key}}" style="font-size:9px;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Waiting...</span>
+      </div>
+    </div>
+    {% endfor %}
+
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:10px;margin-top:8px">
+      <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px">
+        <span style="color:#555">Groq Calls</span>
+        <span id="callCount" style="color:#008080;font-weight:bold">0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px">
+        <span style="color:#555">Errors Today</span>
+        <span id="errorCount" style="color:#44ff88;font-weight:bold">0</span>
+      </div>
     </div>
 
-    <!-- Center Panel: Activity Feed -->
-    <div class="lg:col-span-3 flex flex-col card overflow-hidden">
-        <!-- Feed Header -->
-        <div class="p-4 border-b border-[#333] flex justify-between items-center bg-[#1A1A1A]">
-            <div class="flex space-x-2">
-                <button class="px-3 py-1 bg-[#008080] text-white text-[10px] uppercase rounded">All</button>
-                <button class="px-3 py-1 bg-[#0A0A0A] text-gray-400 text-[10px] uppercase rounded hover:text-white transition">Errors</button>
-                <button class="px-3 py-1 bg-[#0A0A0A] text-gray-400 text-[10px] uppercase rounded hover:text-white transition">Director</button>
-            </div>
-            <div class="relative">
-                <input type="text" placeholder="Search logs..." class="bg-[#0A0A0A] border border-[#333] text-[10px] px-3 py-1 rounded w-48 focus:border-[#008080] outline-none">
-            </div>
-        </div>
-
-        <!-- Feed Content -->
-        <div id="log-container" class="flex-grow overflow-y-auto p-4 space-y-3 font-mono text-[11px]">
-            {% for log in logs %}
-            <div class="flex space-x-4 opacity-80 hover:opacity-100 transition">
-                <span class="text-gray-600 shrink-0">{{ log.timestamp.strftime('%H:%M:%S') }}</span>
-                <span class="teal-text uppercase w-24 shrink-0">[{{ log.agent_name }}]</span>
-                <span class="text-gray-400">/</span>
-                <span class="{% if log.log_type == 'error' %}text-red-500{% elif log.log_type == 'success' %}text-green-500{% else %}text-gray-300{% endif %}">
-                    {{ log.content }}
-                </span>
-            </div>
-            {% else %}
-            <div class="text-center text-gray-600 py-20 italic">
-                Waiting for agent activity...
-            </div>
-            {% endfor %}
-        </div>
-
-        <!-- Owner Input Area -->
-        <div class="p-4 border-t border-[#333] bg-[#1A1A1A]">
-            <div class="flex space-x-4">
-                <textarea id="owner-input" placeholder="Give instructions to the AI Team (e.g., 'Focus on Mumbai rain for next post')" 
-                    class="flex-grow bg-[#0A0A0A] border border-[#333] rounded p-3 text-xs text-white focus:border-[#008080] outline-none resize-none h-12"></textarea>
-                <button onclick="sendOwnerInput()" class="bg-[#008080] hover:bg-[#005F5F] px-6 rounded text-white bebas tracking-widest transition">SEND</button>
-            </div>
-        </div>
+    <div id="agentPanel" style="display:none;background:#1a1a1a;border:1px solid #008080;border-radius:6px;padding:10px;margin-top:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span id="panelTitle" style="font-size:11px;font-weight:bold;color:#008080"></span>
+        <button onclick="closePanel()" style="background:none;border:none;color:#666;font-size:16px;cursor:pointer;line-height:1">×</button>
+      </div>
+      <p id="panelDesc" style="font-size:9px;color:#777;margin-bottom:8px;line-height:1.5"></p>
+      <button onclick="runAgent()" style="width:100%;padding:7px;background:#008080;border:none;border-radius:4px;color:#fff;font-size:10px;font-weight:bold;cursor:pointer">▶ RUN NOW</button>
     </div>
+  </div>
+
+  <!-- CENTER PANEL -->
+  <div style="flex:1;display:flex;flex-direction:column;background:#111;border:1px solid #333;border-radius:6px;overflow:hidden">
+
+    <div style="padding:8px 12px;border-bottom:1px solid #222;display:flex;align-items:center;gap:8px;background:#0d0d0d;flex-shrink:0;flex-wrap:wrap">
+      <div style="width:6px;height:6px;border-radius:50%;background:#008080;animation:blink 1.5s infinite;flex-shrink:0"></div>
+      <span style="font-size:10px;color:#fff;font-weight:bold;margin-right:4px">LIVE</span>
+
+      <button id="btn_all" onclick="filter('all')"
+              style="padding:2px 8px;background:#008080;border:none;border-radius:3px;color:#fff;font-size:9px;cursor:pointer">ALL</button>
+      <button id="btn_strategist" onclick="filter('strategist')"
+              style="padding:2px 8px;background:#1a1a1a;border:1px solid #333;border-radius:3px;color:#666;font-size:9px;cursor:pointer">🧠</button>
+      <button id="btn_copywriter" onclick="filter('copywriter')"
+              style="padding:2px 8px;background:#1a1a1a;border:1px solid #333;border-radius:3px;color:#666;font-size:9px;cursor:pointer">✍️</button>
+      <button id="btn_director" onclick="filter('director')"
+              style="padding:2px 8px;background:#1a1a1a;border:1px solid #333;border-radius:3px;color:#666;font-size:9px;cursor:pointer">🎬</button>
+      <button id="btn_analyst" onclick="filter('analyst')"
+              style="padding:2px 8px;background:#1a1a1a;border:1px solid #333;border-radius:3px;color:#666;font-size:9px;cursor:pointer">📊</button>
+      <button id="btn_error" onclick="filter('error')"
+              style="padding:2px 8px;background:#1a1a1a;border:1px solid #333;border-radius:3px;color:#666;font-size:9px;cursor:pointer">❌</button>
+      <button onclick="runTest()"
+              style="padding:2px 8px;background:#1e40af;border:none;border-radius:3px;color:#fff;font-size:9px;cursor:pointer">🧪 TEST</button>
+
+      <span id="connStatus" style="margin-left:auto;font-size:9px;color:#444">Connecting...</span>
+    </div>
+
+    <div id="feed" style="flex:1;overflow-y:auto;padding:8px 12px;font-family:'Courier New',monospace;font-size:10px;background:#0a0a0a;line-height:1.6">
+      <div id="empty" style="text-align:center;color:#333;padding:60px 0">
+        <div style="font-size:28px;margin-bottom:8px">📡</div>
+        <div>Connecting to live feed...</div>
+        <div style="font-size:9px;margin-top:4px;color:#222">Click 🧪 TEST to verify</div>
+      </div>
+    </div>
+
+    <div style="padding:8px 12px;border-top:1px solid #222;background:#0d0d0d;flex-shrink:0">
+      <div style="display:flex;gap:8px">
+        <input id="msgInput" type="text"
+               placeholder="Send instruction to AI team... e.g. Focus on biker content this week"
+               onkeydown="if(event.key==='Enter')sendMsg()"
+               style="flex:1;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:4px;padding:7px 10px;color:#ddd;font-size:11px;outline:none">
+        <button onclick="sendMsg()"
+                style="padding:7px 16px;background:#008080;border:none;border-radius:4px;color:#fff;font-size:11px;font-weight:bold;cursor:pointer;letter-spacing:1px">SEND</button>
+      </div>
+    </div>
+  </div>
 </div>
+
+<style>
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    const logContainer = document.getElementById('log-container');
-    
-    socket.on('new_log', (data) => {
-        const logEntry = document.createElement('div');
-        logEntry.className = 'flex space-x-4 opacity-0 transition-opacity duration-500';
-        logEntry.innerHTML = `
-            <span class="text-gray-600 shrink-0">${new Date().toLocaleTimeString()}</span>
-            <span class="teal-text uppercase w-24 shrink-0">[${data.agent_name}]</span>
-            <span class="text-gray-400">/</span>
-            <span class="${data.log_type === 'error' ? 'text-red-500' : data.log_type === 'success' ? 'text-green-500' : 'text-gray-300'}">
-                ${data.content}
-            </span>
-        `;
-        logContainer.prepend(logEntry);
-        setTimeout(() => logEntry.classList.remove('opacity-0'), 10);
-    });
+// ── STATE ──────────────────────────────────────
+var logs = [];
+var activeFilter = 'all';
+var activeAgent  = null;
 
-    function sendOwnerInput() {
-        const input = document.getElementById('owner-input');
-        const message = input.value.trim();
-        if (!message) return;
+var DESC = {
+  strategist:   'Plans all content based on data, weather and trends.',
+  copywriter:   'Writes Hinglish captions with 8 psychology triggers.',
+  designer:     'Manages visual pipeline — 4K images and reels.',
+  director:     'Reviews all content — minimum 8.5/10 to approve.',
+  analyst:      'Collects performance data every 2 hours.',
+  growth_hacker:'Monitors competitors and finds growth gaps.'
+};
+var JOBS = {
+  strategist:'morning_brief', copywriter:'content_creation',
+  designer:'content_creation', director:'content_creation',
+  analyst:'analytics', growth_hacker:'competitor_scan'
+};
 
-        fetch('/api/owner/input', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: message })
-        }).then(res => res.json())
-          .then(data => {
-              input.value = '';
-              // Optionally add a local "sent" log
-          });
+// ── SOCKET ─────────────────────────────────────
+var sock = io({ 
+    transports: ['polling'], 
+    reconnection: true, 
+    reconnectionDelay: 2000, 
+    timeout: 20000 
+}); 
+
+sock.on('connect', function(){
+  console.log('✅ Socket connected:', sock.id);
+  setConn('● Connected','#008080');
+  pushSys('Live feed connected ✅');
+  fetchOldLogs();
+});
+sock.on('connect_error', function(e){
+  setConn('● Error: '+e.message,'#f44');
+  console.log('Socket error:', e.message);
+});
+sock.on('disconnect', function(){
+  setConn('● Disconnected','#fa0');
+  pushSys('Disconnected — reconnecting...');
+});
+sock.on('new_log', function(d){
+  console.log('📡 new_log:', d);
+  pushLog(d);
+  var k=(d.agent_name||'').toLowerCase().replace(/ /g,'_');
+  setWorking(k, d.content||'');
+  if((d.log_type||'').toUpperCase().indexOf('ERROR')>=0){
+    var ec=document.getElementById('errorCount');
+    if(ec) ec.textContent=parseInt(ec.textContent||0)+1;
+  }
+});
+sock.on('agent_status', function(d){
+  var k=(d.agent_name||'').toLowerCase().replace(/ /g,'_');
+  setStatus(k, d.status, d.current_task||'');
+});
+
+function setConn(txt,color){
+  var el=document.getElementById('connStatus');
+  if(el){el.textContent=txt;el.style.color=color;}
+}
+
+// ── LOG FUNCTIONS ───────────────────────────────
+function pushSys(msg){
+  pushLog({agent_name:'System',log_type:'SYSTEM',content:msg,
+           timestamp:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})});
+}
+
+function pushLog(d){
+  logs.unshift(d);
+  var k=activeFilter;
+  var an=(d.agent_name||'').toLowerCase();
+  var lt=(d.log_type||'').toLowerCase();
+  if(k==='all'||an.indexOf(k)>=0||lt.indexOf(k)>=0) appendRow(d);
+  var empty=document.getElementById('empty');
+  if(empty) empty.remove();
+}
+
+function appendRow(d){
+  var feed=document.getElementById('feed');
+  if(!feed) return;
+  var empty=document.getElementById('empty');
+  if(empty) empty.remove();
+
+  var ak=(d.agent_name||'').toLowerCase().replace(/ /g,'_');
+  var nc={strategist:'#60a5fa',copywriter:'#4ade80',designer:'#c084fc',
+          director:'#fbbf24',analyst:'#f472b6',growth_hacker:'#fb923c',system:'#666'};
+  var tc={APPROVED:'#008080',REJECTED:'#ef4444',ERROR:'#ef4444',POSTED:'#22d3ee',WORKING:'#888'};
+  var nameCol=nc[ak]||'#777';
+  var typeCol=tc[(d.log_type||'').toUpperCase()]||'#555';
+
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #111';
+  row.dataset.agent=ak;
+  row.dataset.type=(d.log_type||'').toLowerCase();
+  row.innerHTML=
+    '<span style="color:#333;flex-shrink:0;width:56px;font-size:9px">'+(d.timestamp||'')+'</span>'+
+    '<span style="color:'+nameCol+';flex-shrink:0;width:88px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">['+( d.agent_name||'')+']</span>'+
+    '<span style="color:'+typeCol+';flex-shrink:0;width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(d.log_type||'')+'</span>'+
+    '<span style="color:#bbb;word-break:break-all;font-size:9px">'+(d.content||'').substring(0,250)+'</span>';
+  feed.insertBefore(row, feed.firstChild);
+}
+
+async function fetchOldLogs(){
+  try{
+    var r=await fetch('/api/logs');
+    var d=await r.json();
+    if(d&&d.length){
+      logs=d.slice().reverse();
+      renderFeed();
+    } else {
+      var feed=document.getElementById('feed');
+      if(feed) feed.innerHTML=
+        '<div style="text-align:center;color:#333;padding:40px 0">'+
+        '<div style="font-size:24px;margin-bottom:8px">🤖</div>'+
+        '<div style="font-size:11px">No logs yet — agents have not run</div>'+
+        '<div style="font-size:9px;margin-top:4px;color:#222">Go to Pipeline → Generate Post Now</div>'+
+        '<button onclick="runTest()" style="margin-top:12px;padding:6px 14px;background:#1e40af;border:none;border-radius:4px;color:#fff;font-size:10px;cursor:pointer">🧪 Test Connection</button>'+
+        '</div>';
     }
+  }catch(e){console.log('fetchOldLogs error:',e);}
+}
+
+function renderFeed(){
+  var feed=document.getElementById('feed');
+  if(!feed) return;
+  feed.innerHTML='';
+  var f=activeFilter==='all'?logs:logs.filter(function(l){
+    return (l.agent_name||'').toLowerCase().indexOf(activeFilter)>=0||
+           (l.log_type||'').toLowerCase().indexOf(activeFilter)>=0;
+  });
+  if(!f.length){
+    feed.innerHTML='<div style="text-align:center;color:#333;padding:20px;font-size:10px">No logs for this filter</div>';
+    return;
+  }
+  f.forEach(function(l){appendRow(l);});
+}
+
+// ── FILTER ──────────────────────────────────────
+function filter(f){
+  activeFilter=f;
+  ['all','strategist','copywriter','director','analyst','error'].forEach(function(b){
+    var btn=document.getElementById('btn_'+b);
+    if(!btn) return;
+    if(b===f){btn.style.background='#008080';btn.style.color='#fff';btn.style.borderColor='#008080';}
+    else{btn.style.background='#1a1a1a';btn.style.color='#666';btn.style.borderColor='#333';}
+  });
+  renderFeed();
+}
+
+// ── AGENT STATUS ────────────────────────────────
+function setWorking(key, task){ setStatus(key,'working',task); }
+
+function setStatus(key, status, task){
+  var dot=document.getElementById('dot_'+key);
+  var st=document.getElementById('status_'+key);
+  var tk=document.getElementById('task_'+key);
+  var cd=document.getElementById('agent_'+key);
+  if(!dot) return;
+  if(status==='working'){
+    dot.style.background='#008080';dot.style.boxShadow='0 0 6px #008080';
+    if(st){st.textContent='WORKING';st.style.color='#008080';}
+    if(cd) cd.style.borderColor='#008080';
+  } else if(status==='error'){
+    dot.style.background='#ef4444';
+    if(st){st.textContent='ERROR';st.style.color='#ef4444';}
+  } else {
+    dot.style.background='#333';dot.style.boxShadow='none';
+    if(st){st.textContent='IDLE';st.style.color='#555';}
+    if(cd) cd.style.borderColor='#333';
+  }
+  if(task&&tk) tk.textContent=task.substring(0,50);
+}
+
+// ── AGENT PANEL ─────────────────────────────────
+function selectAgent(key){
+  activeAgent=key;
+  var p=document.getElementById('agentPanel');
+  var t=document.getElementById('panelTitle');
+  var d=document.getElementById('panelDesc');
+  if(t) t.textContent=key.replace(/_/g,' ').toUpperCase();
+  if(d) d.textContent=DESC[key]||'';
+  if(p) p.style.display='block';
+  ['strategist','copywriter','designer','director','analyst','growth_hacker'].forEach(function(k){
+    var c=document.getElementById('agent_'+k);
+    if(c) c.style.borderColor=k===key?'#008080':'#333';
+  });
+}
+
+function closePanel(){
+  var p=document.getElementById('agentPanel');
+  if(p) p.style.display='none';
+  ['strategist','copywriter','designer','director','analyst','growth_hacker'].forEach(function(k){
+    var c=document.getElementById('agent_'+k);
+    if(c) c.style.borderColor='#333';
+  });
+  activeAgent=null;
+}
+
+async function runAgent(){
+  if(!activeAgent) return;
+  var job=JOBS[activeAgent]||'content_creation';
+  pushSys('Starting '+activeAgent.replace(/_/g,' ')+'...');
+  setStatus(activeAgent,'working','Starting now...');
+  try{
+    var r=await fetch('/api/scheduler/run_now/'+job,{method:'POST',headers:{'Content-Type':'application/json'}});
+    var d=await r.json();
+    if(d&&d.success){ showAlert(d.message,'success'); }
+    else{ showAlert((d&&d.message)||'Failed','error'); setStatus(activeAgent,'idle',''); }
+  }catch(e){ showAlert('Error: '+e.message,'error'); }
+}
+
+// ── OWNER INPUT ─────────────────────────────────
+async function sendMsg(){
+  var inp=document.getElementById('msgInput');
+  var msg=inp?inp.value.trim():'';
+  if(!msg) return;
+  inp.value='';
+  pushSys('📨 You: "'+msg+'"');
+  try{
+    var r=await fetch('/api/owner/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+    var d=await r.json();
+    if(d&&d.success){
+      showAlert('Instruction sent!','success');
+      pushSys('✅ Team received your instruction');
+    }
+  }catch(e){ showAlert('Failed to send','error'); }
+}
+
+// ── TEST ─────────────────────────────────────────
+async function runTest(){
+  pushSys('Running socket test...');
+  console.log('Socket connected:', sock.connected, 'ID:', sock.id);
+  try{
+    var r=await fetch('/api/test/socket',{method:'POST',headers:{'Content-Type':'application/json'}});
+    var d=await r.json();
+    if(d&&d.success){ showAlert('Test sent — watch for 3 new entries!','info'); }
+    else{ showAlert('Test failed: '+(d&&d.message),'error'); }
+  }catch(e){ showAlert('Test error: '+e.message,'error'); }
+}
+
+// ── CALL COUNTER ─────────────────────────────────
+async function updateCalls(){
+  try{
+    var r=await fetch('/api/status');
+    var d=await r.json();
+    if(d){ var el=document.getElementById('callCount'); if(el) el.textContent=d.gemini_calls_today||0; }
+  }catch(e){}
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  updateCalls();
+  setInterval(updateCalls,30000);
+});
 </script>
 {% endblock %}

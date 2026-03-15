@@ -1,37 +1,34 @@
-from dashboard.app import socketio
-from flask_socketio import emit
-
-@socketio.on("connect")
-def handle_connect():
-    print("Dashboard client connected")
-
-@socketio.on("disconnect")
-def handle_disconnect():
-    print("Dashboard client disconnected")
-
-def broadcast_log(agent_name, log_type, content):
-    """
-    Broadcasts a log message to all connected clients.
-    agent_name: str (e.g., 'Director', 'Analyst')
-    log_type: str ('info', 'warning', 'error', 'success')
-    content: str (The log message)
-    """
-    emit('new_log', {
-        'agent_name': agent_name,
-        'log_type': log_type,
-        'content': content,
-        'timestamp': None # Can be filled by client or passed
-    }, namespace='/', broadcast=True)
-
-def broadcast_agent_status(agent_name, status, current_task):
-    """
-    Updates the status of an agent for all connected clients.
-    agent_name: str
-    status: str ('idle', 'working', 'error')
-    current_task: str
-    """
-    emit('agent_status', {
-        'agent_name': agent_name,
-        'status': status,
-        'current_task': current_task
-    }, namespace='/', broadcast=True)
+from dashboard.app import socketio 
+from datetime import datetime 
+ 
+@socketio.on("connect") 
+def handle_connect(): 
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Browser connected to Socket.IO") 
+ 
+@socketio.on("disconnect") 
+def handle_disconnect(): 
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Browser disconnected") 
+ 
+def broadcast_log(agent_name, log_type, content): 
+    try: 
+        payload = { 
+            "agent_name": str(agent_name), 
+            "log_type":   str(log_type), 
+            "content":    str(content)[:500], 
+            "timestamp":  datetime.now().strftime("%H:%M:%S") 
+        } 
+        socketio.emit("new_log", payload, namespace="/") 
+        print(f"[EMIT ✅] {agent_name} | {log_type} | {str(content)[:60]}") 
+    except Exception as e: 
+        print(f"[EMIT ❌] {e}") 
+ 
+def broadcast_agent_status(agent_name, status, current_task=""): 
+    try: 
+        socketio.emit("agent_status", { 
+            "agent_name":   str(agent_name), 
+            "status":       str(status), 
+            "current_task": str(current_task)[:100], 
+            "timestamp":    datetime.now().strftime("%H:%M:%S") 
+        }, namespace="/") 
+    except Exception as e: 
+        print(f"[STATUS ERROR] {e}") 
