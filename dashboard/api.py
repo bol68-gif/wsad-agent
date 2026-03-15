@@ -114,3 +114,32 @@ def test_copywriter():
     c = Copywriter()
     caption = c.write_caption(brief)
     return jsonify({"caption": caption})
+
+@api_bp.route("/test/full_pipeline")
+@login_required
+def test_full_pipeline():
+    from ai_team.strategist import Strategist
+    from ai_team.copywriter import Copywriter
+    from ai_team.director import Director
+    from ai_team.designer import Designer
+    
+    s = Strategist()
+    brief = s.morning_brief()
+    
+    c = Copywriter()
+    caption = c.write_caption(brief)
+    
+    des = Designer()
+    assets = des.create_post_assets(brief, caption)
+    
+    d = Director()
+    review = d.review_content(caption, "Generated cinematic image with rain effects", brief)
+    approved = d.approve_or_reject(review)
+    
+    return jsonify({
+        "brief": brief,
+        "caption": caption,
+        "assets": assets,
+        "review": review,
+        "approved": approved
+    })
