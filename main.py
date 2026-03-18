@@ -4,18 +4,19 @@ app = create_app()
  
 from distribution.telegram_bot import start_bot 
 from scheduler import setup_scheduler 
- 
+
+# Start services on import (required for Gunicorn)
+print("\n" + "="*50) 
+print("RF AGENT STARTING") 
+print("="*50) 
+print("Starting Telegram bot...") 
+start_bot() 
+print("Starting scheduler...") 
+setup_scheduler() 
+print("Dashboard: http://localhost:5000") 
+print("="*50 + "\n") 
+
 if __name__ == "__main__": 
-    print("\n" + "="*50) 
-    print("RF AGENT STARTING") 
-    print("="*50) 
-    print("Starting Telegram bot...") 
-    start_bot() 
-    print("Starting scheduler...") 
-    setup_scheduler() 
-    print("Dashboard: http://localhost:5000") 
-    print("="*50 + "\n") 
- 
     socketio.run( 
         app, 
         host         = "0.0.0.0", 
