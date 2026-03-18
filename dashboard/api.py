@@ -150,6 +150,7 @@ def run_job_now(job_name):
             "auto_post":        "run_auto_post_job", 
             "analytics":        "run_analytics_collection", 
             "competitor_scan":  "run_competitor_scan", 
+            "make_plan":        "run_planning_cycle",
         } 
         if job_name not in jobs: 
             return jsonify({"success": False, 
@@ -165,6 +166,21 @@ def run_job_now(job_name):
         }) 
     except Exception as e: 
         return jsonify({"success": False, "message": str(e)}) 
+
+@api_bp.route("/planner/generate", methods=["POST"])
+@login_required
+def generate_plan():
+    data = request.get_json()
+    timeframe = data.get("timeframe", "week")
+    try:
+        from ai_team.strategist import Strategist
+        s = Strategist()
+        plan = s.make_plan(timeframe)
+        if plan:
+            return jsonify({"success": True, "plan": plan})
+        return jsonify({"success": False, "message": "Failed to generate plan"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
 
 @api_bp.route("/agents/status") 
 @login_required 
@@ -382,7 +398,8 @@ def upload_product_image(product_id):
     os.makedirs(save_dir, exist_ok=True) 
     save_path = os.path.join(save_dir, filename) 
     file.save(save_path) 
-    product.primary_image = save_path 
+    # Normalize path to forward slashes for cross-platform compatibility
+    product.primary_image = save_path.replace("\\", "/") 
     db.session.commit() 
     return jsonify({ 
         "success":   True, 

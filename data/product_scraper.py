@@ -44,15 +44,46 @@ def scrape_product_page(url):
             description = desc_elem.text.strip()
             
         images = []
-        img_elems = soup.find_all('img')
-        for img in img_elems:
-            src = img.get('src') or img.get('data-src')
-            if src and ('products' in src.lower() or 'cdn' in src.lower()):
-                if src.startswith('//'):
-                    src = 'https:' + src
-                elif src.startswith('/'):
-                    src = 'https://www.relaxfashionwear.in' + src
-                images.append(src)
+        base_url = "https://www.relaxfashionwear.in"
+        # -- IMAGES (Better selectors for Shopify/WooCommerce) --
+        img_selectors = [
+            "meta[property='og:image']",
+            "img.product-featured-img",
+            "img.ProductItem__Image",
+            ".product-single__photo img",
+            ".woocommerce-product-gallery__image img",
+            ".product-gallery img",
+            ".main-product-image img",
+            "img[id^='ProductPhotoImg']",
+            "img[class*='product-main-image']",
+            "img[src*='/products/']"
+        ]
+        
+        for sel in img_selectors:
+            if sel.startswith("meta"):
+                tag = soup.select_one(sel)
+                if tag and tag.get("content"):
+                    img_url = tag.get("content")
+                    if img_url.startswith("//"): img_url = "https:" + img_url
+                    images.append(img_url)
+            else:
+                for img in soup.select(sel):
+                    src = img.get("src") or img.get("data-src") or img.get("data-lazy-src")
+                    if src:
+                        if src.startswith("//"): src = "https:" + src
+                        elif src.startswith("/"): src = base_url + src
+                        if src not in images:
+                            images.append(src)
+        
+        # If no images found, try any large image
+        if not images:
+            for img in soup.find_all("img"):
+                src = img.get("src") or img.get("data-src")
+                if src and any(x in src.lower() for x in ["product", "img", "item", "p-"]):
+                    if src.startswith("//"): src = "https:" + src
+                    elif src.startswith("/"): src = base_url + src
+                    if src not in images:
+                        images.append(src)
         
         # Category (heuristic from breadcrumbs or URL)
         category = "Uncategorized"
@@ -91,31 +122,35 @@ def scrape_products():
         for link in list(product_links)[:20]: # Limit to 20 for safety
             data = scrape_product_page(link)
             if data:
-                # Check if product exists
-                product = Product.query.filter_by(name=data['name']).first()
-                if not product:
-                    product = Product(name=data['name'])
-                    db.session.add(product)
-                
-                product.price = data['price']
-                product.description = data['description']
-                product.category = data['category']
-                product.website_url = data['website_url']
-                product.scraped_at = datetime.utcnow()
-                
-                if data['images']:
-                    product.all_images = ",".join(data['images'])
-                    # Download first image as primary
-                    primary_url = data['images'][0]
-                    safe_name = "".join([c for c in data['name'] if c.isalnum() or c==' ']).rstrip()
-                    save_dir = os.path.join("assets", "products", safe_name)
-                    save_path = os.path.join(save_dir, "primary.jpg")
-                    local_path = download_image(primary_url, save_path)
-                    if local_path:
-                        product.primary_image = local_path
-                
-                db.session.commit()
-                scraped_data.append(product.to_dict())
+                # Save to database
+                from data.database import db, Product
+                existing = Product.query.filter_by(name=data['name']).first()
+                if not existing:
+                    p = Product(
+                        name           = data['name'],
+                        price          = data['price'],
+                        category       = data['category'],
+                        website_url    = data['website_url'],
+                        description    = data['description'],
+                        primary_image  = data['images'][0] if data['images'] else None,
+                        all_images     = ",".join(data['images']) if data['images'] else "",
+                        scraped_at     = datetime.utcnow()
+                    )
+                    db.session.add(p)
+                    db.session.commit()
+                    scraped_data.append(p.to_dict())
+                else:
+                    # Update existing product
+                    existing.price = data['price']
+                    existing.category = data['category']
+                    existing.description = data['description']
+                    existing.website_url = data['website_url']
+                    existing.scraped_at = datetime.utcnow()
+                    if not existing.primary_image and data['images']:
+                        existing.primary_image = data['images'][0]
+                    existing.all_images = ",".join(data['images']) if data['images'] else existing.all_images
+                    db.session.commit()
+                    scraped_data.append(existing.to_dict())
                 
         return scraped_data
     except Exception as e:

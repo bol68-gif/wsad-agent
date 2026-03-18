@@ -72,7 +72,10 @@
         <div class="card p-6">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-[10px] uppercase tracking-widest text-gray-500">AI Team Live Status</h3>
-                <span id="nextJobTime" class="text-[9px] text-teal-400"></span>
+                <div class="flex gap-2 items-center">
+                    <button onclick="openPlanner()" class="text-[9px] bg-teal-600/20 text-teal-400 border border-teal-600/30 px-2 py-1 rounded hover:bg-teal-600/40 transition">Planner</button>
+                    <span id="nextJobTime" class="text-[9px] text-teal-400"></span>
+                </div>
             </div>
             <div id="agentStatusGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <!-- Filled by JavaScript -->
@@ -93,6 +96,36 @@
                     <div class="bg-[#008080] h-full w-[65%]"></div>
                 </div>
                 <span class="text-[10px] uppercase text-gray-500">65% Target Reached</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Planner Modal -->
+<div id="plannerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+    <div class="card w-full max-w-xl">
+        <div class="p-6 border-b border-[#333] flex justify-between items-center">
+            <h3 class="bebas text-2xl teal-text">Strategic Planner</h3>
+            <button onclick="closePlanner()" class="text-gray-500 hover:text-white text-2xl">&times;</button>
+        </div>
+        <div class="p-6 space-y-4">
+            <p class="text-xs text-gray-400">Select a timeframe for the Strategist to design your marketing roadmap.</p>
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="generatePlan('day')" class="bg-[#111] border border-[#333] hover:border-teal-600 p-4 rounded transition group text-center">
+                    <div class="text-xl mb-1 group-hover:scale-110 transition">☀️</div>
+                    <div class="text-[10px] font-bold uppercase text-white">Next Day</div>
+                </button>
+                <button onclick="generatePlan('week')" class="bg-[#111] border border-[#333] hover:border-teal-600 p-4 rounded transition group text-center">
+                    <div class="text-xl mb-1 group-hover:scale-110 transition">📅</div>
+                    <div class="text-[10px] font-bold uppercase text-white">Next Week</div>
+                </button>
+                <button onclick="generatePlan('month')" class="bg-[#111] border border-[#333] hover:border-teal-600 p-4 rounded transition group text-center">
+                    <div class="text-xl mb-1 group-hover:scale-110 transition">🚀</div>
+                    <div class="text-[10px] font-bold uppercase text-white">Next Month</div>
+                </button>
+            </div>
+            <div id="planResult" class="hidden mt-4 p-4 bg-[#0A0A0A] border border-[#222] rounded max-h-60 overflow-y-auto">
+                <pre id="planContent" class="text-[10px] text-teal-400 whitespace-pre-wrap font-mono"></pre>
             </div>
         </div>
     </div>
@@ -130,6 +163,45 @@ async function loadAgentStatus() {
         }
     } catch(e) {
         console.error("Status load error:", e);
+    }
+}
+
+function openPlanner() {
+    document.getElementById('plannerModal').style.display = 'flex';
+}
+
+function closePlanner() {
+    document.getElementById('plannerModal').style.display = 'none';
+    document.getElementById('planResult').classList.add('hidden');
+}
+
+async function generatePlan(timeframe) {
+    const btn = event.currentTarget;
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '⏳';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/planner/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ timeframe })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const resultDiv = document.getElementById('planResult');
+            const contentPre = document.getElementById('planContent');
+            resultDiv.classList.remove('hidden');
+            contentPre.textContent = JSON.stringify(data.plan, null, 2);
+            showAlert(`${timeframe.capitalize()} plan generated!`, 'success');
+        } else {
+            showAlert(data.message, 'error');
+        }
+    } catch(e) {
+        showAlert('Planning failed', 'error');
+    } finally {
+        btn.innerHTML = oldHtml;
+        btn.disabled = false;
     }
 }
 

@@ -280,6 +280,18 @@ def run_full_agent_cycle():
     print(f"\n[{datetime.now().strftime('%H:%M')}] 🔄 Running scheduled agent cycle...") 
     run_content_creation() 
  
+def run_planning_cycle(timeframe="week"):
+    """Runs a planning cycle for the strategist"""
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Planning cycle started for {timeframe}")
+    app = get_app()
+    with app.app_context():
+        try:
+            from ai_team.strategist import Strategist
+            s = Strategist()
+            s.make_plan(timeframe)
+        except Exception as e:
+            print(f"Planning error: {e}")
+ 
 def startup_sequence(): 
     """Runs immediately when server starts — seeds data and begins agent work""" 
     import time 
