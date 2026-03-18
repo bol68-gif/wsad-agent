@@ -157,7 +157,7 @@ YOUR TASK:
 
     def get_yesterday_score(self):
         try:
-            from scheduler import get_app
+            from dashboard.app import get_app
             app = get_app()
             with app.app_context():
                 from data.database import Post
@@ -168,7 +168,7 @@ YOUR TASK:
 
     def get_performance_context(self):
         try:
-            from scheduler import get_app
+            from dashboard.app import get_app
             app = get_app()
             with app.app_context():
                 from data.database import Analytics, Post

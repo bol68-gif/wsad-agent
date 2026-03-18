@@ -94,7 +94,7 @@ class Settings(db.Model):
 
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     agent_name = db.Column(db.String(50))
     log_type = db.Column(db.String(20)) # info, warning, error, success
     content = db.Column(db.Text)
@@ -145,12 +145,12 @@ class WeatherAlert(db.Model):
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     type = db.Column(db.String(20)) # approval, performance, error, weather
     title = db.Column(db.String(100))
     message = db.Column(db.Text)
     page_link = db.Column(db.String(100))
-    read = db.Column(db.Boolean, default=False)
+    read = db.Column(db.Boolean, default=False, index=True)
     urgent = db.Column(db.Boolean, default=False)
 
     def to_dict(self):

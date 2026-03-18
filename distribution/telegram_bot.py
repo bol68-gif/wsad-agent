@@ -26,6 +26,23 @@ def send_message(text):
     except Exception as e: 
         print(f"Telegram send error: {e}") 
  
+def send_image(image_path, caption=""):
+    """Send an image file to Telegram chat"""
+    try:
+        import os
+        if not image_path or not os.path.exists(image_path):
+            send_message(f"⚠️ Image not found: {image_path}")
+            return
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto"
+        with open(image_path, "rb") as img:
+            requests.post(url, data={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "caption": caption[:1024],
+                "parse_mode": "HTML"
+            }, files={"photo": img}, timeout=30)
+    except Exception as e:
+        print(f"Telegram image send error: {e}")
+
 def send_login_alert(ip): 
     send_message( 
         f"🔐 <b>Dashboard Login Detected</b>\n" 
@@ -312,4 +329,4 @@ def start_bot():
             print(f"❌ Telegram bot error: {e}")
  
     thread = threading.Thread(target=thread_target, daemon=True) 
-    thread.start() 
+    thread.start()

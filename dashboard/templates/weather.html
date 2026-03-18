@@ -170,7 +170,7 @@ async function loadAlertHistory() {
     const data = await apiCall('/api/weather'); 
     const container = document.getElementById('alertHistory'); 
     if (!container) return; 
-    if (!data || !data.length) { 
+    if (!data || !Array.isArray(data) || !data.length) { 
         container.innerHTML = '<p class="text-gray-600 text-xs">No alerts recorded yet</p>'; 
         return; 
     } 

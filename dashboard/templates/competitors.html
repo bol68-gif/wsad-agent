@@ -41,7 +41,7 @@ async function loadCompetitors() {
     const grid = document.getElementById('competitorsGrid'); 
     if (!grid) return; 
  
-    if (!data || !data.length) { 
+    if (!data || !Array.isArray(data) || !data.length) { 
         grid.innerHTML = ` 
             <div class="col-span-full text-center py-12"> 
                 <div class="text-5xl mb-4">🔍</div> 
@@ -91,22 +91,23 @@ async function loadCompetitors() {
 } 
  
 async function loadGapAnalysis() { 
-    const container = document.getElementById('gapAnalysis'); 
-    if (!container) return; 
+    const data = await apiCall('/api/competitors/gap_analysis'); 
+    const grid = document.getElementById('gapAnalysis'); 
+    if (!grid) return; 
  
-    const gaps = [ 
-        { icon: '🏍️', gap: 'Zero competitor owns the delivery partner + biker segment', action: 'RF creates 4 biker posts per week' }, 
-        { icon: '🗣️', gap: 'All competitors post in English only — no Hinglish content', action: 'RF posts 100% Hinglish — more relatable' }, 
-        { icon: '🏭', gap: 'No competitor shows factory manufacturing process', action: 'RF Monday factory trust posts' }, 
-        { icon: '🌧️', gap: 'No real-time monsoon urgency content from any brand', action: 'RF weather-triggered emergency posts' }, 
-    ]; 
+    if (!data || !data.gaps) { 
+        grid.innerHTML = '<p class="text-xs text-gray-500 italic">No analysis available yet.</p>'; 
+        return; 
+    } 
  
-    container.innerHTML = gaps.map(g => ` 
-        <div class="flex items-start gap-4 p-4 bg-gray-700/30 rounded-xl border border-gray-600/50"> 
-            <div class="text-2xl">${g.icon}</div> 
-            <div class="flex-1"> 
-                <p class="text-white text-sm font-medium">${g.gap}</p> 
-                <p class="text-teal-400 text-xs mt-1">✅ RF Action: ${g.action}</p> 
+    grid.innerHTML = data.gaps.map(gap => ` 
+        <div class="bg-[#0a0a0a] border border-[#222] rounded-lg p-4"> 
+            <div class="flex items-start gap-3"> 
+                <div class="w-2 h-2 rounded-full bg-teal-500 mt-1.5"></div> 
+                <div> 
+                    <p class="text-xs text-white font-medium mb-1">${gap}</p> 
+                    <p class="text-[10px] text-gray-500">Untapped segment identified by AI scan.</p> 
+                </div> 
             </div> 
         </div> 
     `).join(''); 

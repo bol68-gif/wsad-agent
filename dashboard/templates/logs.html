@@ -2,19 +2,16 @@
 {% block title %}Live Activity Feed{% endblock %}
 
 {% block content %}
-<div class="flex gap-4 h-[calc(100vh-140px)]">
+<div class="flex gap-6 h-[calc(100vh-140px)] bg-[#F5F7FA] -m-8 p-8">
 
     <!-- LEFT PANEL: AGENT STATUS -->
-    <div class="w-64 flex-shrink-0 flex flex-col gap-4 overflow-y-auto pr-2">
+    <div class="w-72 flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
         <div class="flex justify-between items-center px-1">
-            <h3 class="text-[10px] uppercase tracking-widest text-gray-500">AI Team</h3>
-            <span class="flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
-                <span id="connStatus" class="text-[9px] text-teal-500 font-bold uppercase">Connected</span>
-            </span>
+            <h3 class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#64748B]">AI Team Status</h3>
+            <span id="logCountBadge" class="bg-[#0D9488] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">0 LOGS</span>
         </div>
 
-        <div id="agentCards" class="space-y-2">
+        <div id="agentCards" class="space-y-3">
             {% for key, emoji, label in [
                 ('strategist', '🧠', 'Strategist'),
                 ('copywriter', '✍️', 'Copywriter'),
@@ -24,93 +21,110 @@
                 ('growth_hacker', '🚀', 'Growth Hacker')
             ] %}
             <div id="agent_{{key}}" onclick="selectAgent('{{key}}')" 
-                 class="agent-card bg-[#111] border border-[#222] rounded-lg p-3 cursor-pointer hover:border-teal-600/50 transition group">
+                 class="agent-card bg-white border border-[#E2E8F0] rounded-xl p-4 cursor-pointer hover:shadow-md transition-all duration-300 group relative overflow-hidden">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-bold text-gray-300 group-hover:text-white transition">{{emoji}} {{label}}</span>
-                    <span id="status_{{key}}" class="text-[9px] font-bold text-gray-600 uppercase">Idle</span>
+                    <span class="text-[13px] font-bold text-[#1A1A2E] flex items-center gap-2">
+                        <span class="text-base">{{emoji}}</span>
+                        {{label}}
+                    </span>
+                    <span id="status_{{key}}" class="status-pill idle text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#64748B] uppercase tracking-wider">Idle</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <div id="dot_{{key}}" class="w-1.5 h-1.5 rounded-full bg-gray-800 transition-all duration-500"></div>
-                    <p id="task_{{key}}" class="text-[10px] text-gray-500 truncate italic">Waiting for task...</p>
+                    <p id="task_{{key}}" class="text-[11px] text-[#64748B] truncate w-full">Waiting for task...</p>
                 </div>
+                <div class="working-border absolute left-0 top-0 bottom-0 w-[3px] bg-[#0D9488] opacity-0 transition-opacity duration-300"></div>
             </div>
             {% endfor %}
         </div>
 
-        <!-- STATS CARD -->
-        <div class="bg-[#111] border border-[#222] rounded-lg p-4 mt-auto">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-[10px] text-gray-500 uppercase">Session Stats</span>
-                <button onclick="runTest()" class="text-[9px] bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded border border-blue-600/30 hover:bg-blue-600/40 transition">🧪 Test</button>
-            </div>
-            <div class="space-y-2">
-                <div class="flex justify-between text-xs">
-                    <span class="text-gray-400">Groq Calls</span>
-                    <span id="callCount" class="text-teal-400 font-mono">0</span>
-                </div>
-                <div class="flex justify-between text-xs">
-                    <span class="text-gray-400">Errors</span>
-                    <span id="errorCount" class="text-red-400 font-mono">0</span>
+        <!-- SYSTEM HEALTH CARD -->
+        <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm mt-auto">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">System Health</span>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-[#0D9488] animate-pulse"></span>
+                    <span id="connStatus" class="text-[10px] text-[#0D9488] font-bold uppercase">Live</span>
                 </div>
             </div>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-[11px] text-[#64748B]">Groq Calls</span>
+                    <span id="callCount" class="text-[12px] font-bold text-[#0D9488] font-mono">0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-[11px] text-[#64748B]">Total Logs</span>
+                    <span id="totalLogCount" class="text-[12px] font-bold text-[#1A1A2E] font-mono">0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-[11px] text-[#64748B]">Errors</span>
+                    <span id="errorCount" class="text-[12px] font-bold text-[#16A34A] font-mono">0</span>
+                </div>
+            </div>
+            <button onclick="runTest()" class="w-full mt-4 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition">🧪 Connectivity Test</button>
         </div>
 
         <!-- AGENT CONTROL PANEL (HIDDEN BY DEFAULT) -->
-        <div id="agentPanel" class="hidden bg-[#008080]/10 border border-[#008080]/30 rounded-lg p-4 animate-in fade-in slide-in-from-bottom-2">
-            <div class="flex justify-between items-center mb-2">
-                <h4 id="panelTitle" class="text-xs font-bold text-teal-400 uppercase tracking-wider">Strategist</h4>
-                <button onclick="closePanel()" class="text-gray-500 hover:text-white">&times;</button>
+        <div id="agentPanel" class="hidden bg-white border border-[#0D9488]/30 rounded-xl p-5 shadow-lg animate-in fade-in slide-in-from-bottom-2">
+            <div class="flex justify-between items-center mb-3">
+                <h4 id="panelTitle" class="text-[12px] font-bold text-[#0D9488] uppercase tracking-wider">Strategist</h4>
+                <button onclick="closePanel()" class="text-[#94A3B8] hover:text-[#1A1A2E] transition-colors text-xl leading-none">&times;</button>
             </div>
-            <p id="panelDesc" class="text-[10px] text-gray-400 mb-4 leading-relaxed"></p>
-            <button id="runBtn" onclick="triggerAgent()" class="w-full bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold uppercase py-2 rounded shadow-lg shadow-teal-900/20 transition">
+            <p id="panelDesc" class="text-[11px] text-[#64748B] mb-5 leading-relaxed"></p>
+            <button id="runBtn" onclick="triggerAgent()" class="w-full bg-[#0D9488] hover:bg-[#0F766E] text-white text-[11px] font-bold uppercase tracking-widest py-3 rounded-xl shadow-md shadow-[#0D9488]/10 transition-all active:scale-[0.98]">
                 ▶ Run Agent Now
             </button>
         </div>
     </div>
 
     <!-- MAIN FEED -->
-    <div class="flex-1 flex flex-col bg-[#0a0a0a] border border-[#222] rounded-xl overflow-hidden shadow-2xl">
+    <div class="flex-1 flex flex-col bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-sm">
         
         <!-- FEED HEADER / FILTERS -->
-        <div class="px-4 py-3 bg-[#111] border-bottom border-[#222] flex items-center justify-between">
-            <div class="flex items-center gap-4">
+        <div class="px-6 py-4 border-b border-[#F1F5F9] flex items-center justify-between bg-white">
+            <div class="flex items-center gap-6">
                 <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></div>
-                    <span class="text-[10px] font-bold text-white uppercase tracking-widest">Live Feed</span>
+                    <span class="text-[12px] font-bold text-[#1A1A2E] uppercase tracking-[0.05em]">Activity Stream</span>
                 </div>
-                <div class="h-4 w-px bg-gray-800"></div>
-                <div class="flex gap-1">
+                <div class="flex gap-2">
                     {% for f in ['all', 'strategist', 'copywriter', 'director', 'analyst', 'error'] %}
                     <button onclick="setFilter('{{f}}')" id="filter_{{f}}" 
-                            class="filter-btn px-3 py-1 rounded text-[9px] font-bold uppercase transition {% if f == 'all' %}bg-teal-600 text-white{% else %}text-gray-500 hover:text-white{% endif %}">
+                            class="filter-btn px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 {% if f == 'all' %}bg-[#0D9488] text-white shadow-sm shadow-[#0D9488]/20{% else %}bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]{% endif %}">
                         {{f}}
                     </button>
                     {% endfor %}
                 </div>
             </div>
-            <button onclick="clearFeed()" class="text-[9px] text-gray-600 hover:text-gray-400 uppercase font-bold tracking-tighter">Clear Feed</button>
+            <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" id="autoScrollToggle" checked class="w-3.5 h-3.5 rounded border-[#CBD5E1] text-[#0D9488] focus:ring-[#0D9488]/20">
+                    <span class="text-[10px] font-bold text-[#64748B] uppercase tracking-tighter group-hover:text-[#1A1A2E] transition-colors">Auto-scroll ✓</span>
+                </label>
+                <button onclick="clearFeed()" class="text-[10px] text-[#94A3B8] hover:text-[#EF4444] uppercase font-bold tracking-widest transition-colors">Clear Feed</button>
+            </div>
         </div>
 
         <!-- FEED CONTENT -->
-        <div id="logFeed" class="flex-1 overflow-y-auto p-4 font-mono text-[11px] space-y-1 selection:bg-teal-900 selection:text-teal-200">
+        <div id="logFeed" class="flex-1 overflow-y-auto bg-white selection:bg-[#CCFBF1] selection:text-[#0D9488]">
             <!-- Logs appear here -->
-            <div id="welcomeMsg" class="h-full flex flex-col items-center justify-center text-gray-700 opacity-50">
-                <div class="text-4xl mb-4">📡</div>
-                <p class="bebas tracking-widest text-xl">Connecting to RF Intelligence Grid...</p>
-                <p class="text-[10px] mt-2">Logs will appear here in real-time</p>
+            <div id="welcomeMsg" class="h-full flex flex-col items-center justify-center text-[#94A3B8] opacity-60">
+                <div class="text-5xl mb-4">📡</div>
+                <p class="bebas tracking-[0.2em] text-2xl text-[#1A1A2E]">Intelligence Grid Offline</p>
+                <p class="text-[11px] mt-2 font-medium">Listening for real-time AI signals...</p>
             </div>
         </div>
 
         <!-- OWNER INPUT -->
-        <div class="p-4 bg-[#111] border-t border-[#222]">
-            <div class="relative flex items-center">
-                <input type="text" id="ownerMsg" 
-                       placeholder="Give a command to your AI team... (e.g. 'Focus on Mumbai bikers for next 3 days')" 
-                       class="w-full bg-[#050505] border border-[#222] rounded-lg py-3 pl-4 pr-24 text-sm text-gray-300 focus:outline-none focus:border-teal-600/50 transition shadow-inner"
-                       onkeydown="if(event.key==='Enter') sendOwnerMsg()">
+        <div class="p-5 border-t border-[#F1F5F9] bg-[#FAFBFC]">
+            <div class="relative flex items-center gap-3">
+                <div class="flex-1 relative">
+                    <input type="text" id="ownerMsg" 
+                           placeholder="Type an instruction for the AI team..." 
+                           class="w-full bg-white border border-[#CBD5E1] rounded-xl py-3.5 pl-5 pr-4 text-[13px] text-[#1A1A2E] focus:outline-none focus:border-[#0D9488] focus:ring-4 focus:ring-[#0D9488]/5 transition-all shadow-sm placeholder-[#94A3B8]"
+                           onkeydown="if(event.key==='Enter') sendOwnerMsg()">
+                </div>
                 <button onclick="sendOwnerMsg()" 
-                        class="absolute right-2 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold uppercase px-4 py-1.5 rounded transition">
-                    Send Instruction
+                        class="bg-[#0D9488] hover:bg-[#0F766E] text-white text-[11px] font-bold uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-md shadow-[#0D9488]/10 active:scale-[0.98]">
+                    Send
                 </button>
             </div>
         </div>
@@ -118,13 +132,63 @@
 </div>
 
 <style>
-    .log-entry { border-left: 2px solid transparent; animation: log-in 0.3s ease-out; }
-    @keyframes log-in { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: translateX(0); } }
-    .log-entry:hover { background: rgba(255,255,255,0.02); }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #333; }
+    /* Light Theme Custom Styles */
+    .log-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 24px;
+        border-bottom: 1px solid #F1F5F9;
+        transition: background-color 0.15s ease;
+    }
+    .log-row:nth-child(even) { background-color: #FAFBFC; }
+    .log-row:hover { background-color: #F0FDFA; }
+    
+    .log-time { width: 65px; flex-shrink: 0; color: #94A3B8; font-size: 10px; font-family: 'JetBrains Mono', monospace; padding-top: 2px; }
+    .log-agent { width: 90px; flex-shrink: 0; font-weight: 700; font-size: 11px; }
+    .log-type-wrap { width: 110px; flex-shrink: 0; display: flex; }
+    .log-content { flex: 1; color: #1E293B; font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere; }
+
+    /* Type Badges */
+    .type-badge {
+        font-size: 9px;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-block;
+    }
+
+    /* Scrollbar Styling */
+    #logFeed::-webkit-scrollbar { width: 5px; }
+    #logFeed::-webkit-scrollbar-track { background: #F1F5F9; }
+    #logFeed::-webkit-scrollbar-thumb { background: #0D9488; border-radius: 10px; }
+    #logFeed::-webkit-scrollbar-thumb:hover { background: #0F766E; }
+
+    /* Working State Styles */
+    .agent-card.working { border-color: #0D9488 !important; }
+    .agent-card.working .working-border { opacity: 1; }
+    .status-pill.working { background-color: #CCFBF1 !important; color: #0D9488 !important; }
+    .status-pill.error { background-color: #FEE2E2 !important; color: #DC2626 !important; }
+
+    @keyframes pulse-dot {
+        0% { transform: scale(0.8); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(0.8); opacity: 0.5; }
+    }
+    .pulse-dot {
+        width: 6px;
+        height: 6px;
+        background-color: #0D9488;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 4px;
+        animation: pulse-dot 1.5s infinite ease-in-out;
+    }
+
+    /* Typography fixes */
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 </style>
 
 {% endblock %}
@@ -133,12 +197,31 @@
 <script>
     // -- CONFIG --
     const AGENT_INFO = {
-        strategist: { desc: "Analyzes trends and weather to design the daily roadmap.", job: "morning_brief" },
-        copywriter: { desc: "Crafts high-conversion Hinglish captions using psychology triggers.", job: "content_creation" },
-        designer: { desc: "Generates visual prompts and coordinates image assets.", job: "content_creation" },
-        director: { desc: "Reviews all content against brand standards (min 8.5 score).", job: "content_creation" },
-        analyst: { desc: "Tracks performance metrics and calculates ROI.", job: "analytics" },
-        growth_hacker: { desc: "Scans competitors and identifies market gaps.", job: "competitor_scan" }
+        strategist: { desc: "Analyzes trends and weather to design the daily roadmap.", job: "morning_brief", color: "#3B82F6" },
+        copywriter: { desc: "Crafts high-conversion Hinglish captions using psychology triggers.", job: "content_creation", color: "#10B981" },
+        designer: { desc: "Generates visual prompts and coordinates image assets.", job: "content_creation", color: "#8B5CF6" },
+        director: { desc: "Reviews all content against brand standards (min 8.5 score).", job: "content_creation", color: "#F59E0B" },
+        analyst: { desc: "Tracks performance metrics and calculates ROI.", job: "analytics", color: "#EC4899" },
+        growth_hacker: { desc: "Scans competitors and identifies market gaps.", job: "competitor_scan", color: "#F97316" },
+        system: { color: "#64748B" },
+        coordinator: { color: "#0D9488" }
+    };
+
+    const TYPE_STYLES = {
+        'APPROVED': { bg: '#CCFBF1', text: '#0D9488' },
+        'REJECTED': { bg: '#FEE2E2', text: '#DC2626' },
+        'WORKING': { bg: '#F1F5F9', text: '#475569' },
+        'SUCCESS': { bg: '#DCFCE7', text: '#16A34A' },
+        'ERROR': { bg: '#FEE2E2', text: '#EF4444' },
+        'BRIEF READY': { bg: '#DBEAFE', text: '#2563EB' },
+        'CAPTION READY': { bg: '#DCFCE7', text: '#15803D' },
+        'SCORES': { bg: '#FEF3C7', text: '#D97706' },
+        'OVERALL SCORE': { bg: '#FEF3C7', text: '#B45309' },
+        'MORNING BRIEF': { bg: '#EDE9FE', text: '#7C3AED' },
+        'STRATEGY': { bg: '#DBEAFE', text: '#1D4ED8' },
+        'FIXES': { bg: '#FFEDD5', text: '#EA580C' },
+        'PLAN READY': { bg: '#DBEAFE', text: '#1D4ED8' },
+        'THINKING': { bg: '#F1F5F9', text: '#0D9488' }
     };
 
     let activeFilter = 'all';
@@ -146,7 +229,6 @@
     let logCount = 0;
 
     // -- SOCKET INITIALIZATION --
-    // Using polling for maximum reliability on Windows/Railway
     const sock = io({
         transports: ['polling'],
         reconnection: true,
@@ -156,18 +238,18 @@
 
     sock.on('connect', () => {
         console.log('✅ Connected to RF Grid:', sock.id);
-        updateConnStatus('Connected', 'text-teal-500');
+        updateConnStatus('Live', 'text-[#0D9488]');
         addSystemLog('Secure connection established to AI Coordinator.');
         fetchHistory();
     });
 
     sock.on('connect_error', (err) => {
         console.error('❌ Connection error:', err.message);
-        updateConnStatus('Error: ' + err.message, 'text-red-500');
+        updateConnStatus('Offline', 'text-red-500');
     });
 
     sock.on('disconnect', () => {
-        updateConnStatus('Disconnected', 'text-amber-500');
+        updateConnStatus('Offline', 'text-amber-500');
         addSystemLog('Connection lost. Attempting to reconnect...');
     });
 
@@ -188,12 +270,14 @@
         if (welcome) welcome.remove();
 
         const feed = document.getElementById('logFeed');
-        const entry = document.createElement('div');
+        const row = document.createElement('div');
         
         const isError = data.log_type.toUpperCase().includes('ERROR');
         if (isError) {
             const errEl = document.getElementById('errorCount');
             errEl.textContent = parseInt(errEl.textContent) + 1;
+            errEl.classList.remove('text-[#16A34A]');
+            errEl.classList.add('text-red-500');
         }
 
         // Filter check
@@ -202,41 +286,47 @@
                         activeFilter === agentKey || 
                         (activeFilter === 'error' && isError);
 
-        entry.className = `log-entry py-1 flex gap-3 ${showLog ? '' : 'hidden'}`;
-        entry.dataset.agent = agentKey;
-        entry.dataset.type = data.log_type.toLowerCase();
+        row.className = `log-row ${showLog ? '' : 'hidden'}`;
+        row.dataset.agent = agentKey;
+        row.dataset.type = data.log_type.toLowerCase();
 
-        const colors = {
-            strategist: 'text-blue-400',
-            copywriter: 'text-emerald-400',
-            designer: 'text-purple-400',
-            director: 'text-amber-400',
-            analyst: 'text-pink-400',
-            growth_hacker: 'text-orange-400',
-            system: 'text-gray-500',
-            coordinator: 'text-teal-400'
-        };
+        const agentColor = (AGENT_INFO[agentKey] || AGENT_INFO['system']).color;
+        const typeStyle = TYPE_STYLES[data.log_type.toUpperCase()] || { bg: '#F1F5F9', text: '#64748B' };
 
-        const typeColors = {
-            working: 'text-gray-600',
-            thinking: 'text-teal-600 italic',
-            approved: 'text-teal-400 font-bold',
-            error: 'text-red-500 font-bold',
-            output: 'text-gray-300'
-        };
+        // Clean content: remove "OUT" label if present
+        let content = data.content;
+        if (content.startsWith("OUT ")) content = content.substring(4);
 
-        const agentColor = colors[agentKey] || 'text-gray-400';
-        const typeColor = typeColors[data.log_type.toLowerCase()] || 'text-gray-500';
+        // Format time to HH:MM:SS
+        let timeStr = data.timestamp;
+        if (!timeStr) {
+            const now = new Date();
+            timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
+                      now.getMinutes().toString().padStart(2, '0') + ':' + 
+                      now.getSeconds().toString().padStart(2, '0');
+        } else if (timeStr.includes(' ')) {
+            // If it's a full date string, extract time
+            timeStr = timeStr.split(' ')[1] || timeStr;
+        }
 
-        entry.innerHTML = `
-            <span class="text-gray-800 shrink-0 w-14 text-[9px] pt-0.5">${data.timestamp || new Date().toLocaleTimeString([], {hour12:false})}</span>
-            <span class="${agentColor} font-bold shrink-0 w-24 truncate">[${data.agent_name}]</span>
-            <span class="${typeColor} shrink-0 w-24 truncate text-[10px] uppercase">${data.log_type}</span>
-            <span class="text-gray-400 break-all leading-normal">${data.content}</span>
+        row.innerHTML = `
+            <div class="log-time">${timeStr}</div>
+            <div class="log-agent" style="color: ${agentColor}">${data.agent_name}</div>
+            <div class="log-type-wrap">
+                <span class="type-badge" style="background-color: ${typeStyle.bg}; color: ${typeStyle.text}">${data.log_type}</span>
+            </div>
+            <div class="log-content">${content}</div>
         `;
 
-        feed.prepend(entry);
+        feed.appendChild(row);
         logCount++;
+        
+        document.getElementById('totalLogCount').textContent = logCount;
+        document.getElementById('logCountBadge').textContent = `${logCount} LOGS`;
+
+        if (document.getElementById('autoScrollToggle').checked) {
+            feed.scrollTop = feed.scrollHeight;
+        }
     }
 
     function updateAgentUI(data) {
@@ -247,32 +337,32 @@
     }
 
     function setAgentStatus(key, status, task) {
-        const dot = document.getElementById(`dot_${key}`);
         const statusText = document.getElementById(`status_${key}`);
         const taskText = document.getElementById(`task_${key}`);
         const card = document.getElementById(`agent_${key}`);
 
-        if (!dot || !statusText || !taskText) return;
+        if (!statusText || !taskText || !card) return;
 
         if (status === 'working' || status === 'thinking') {
-            dot.className = 'w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.8)]';
-            statusText.textContent = status.toUpperCase();
-            statusText.className = 'text-[9px] font-bold text-teal-400 uppercase';
+            card.classList.add('working');
+            statusText.innerHTML = '<span class="pulse-dot"></span>WORKING';
+            statusText.className = 'status-pill working text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider';
             taskText.textContent = task || 'Thinking...';
-            taskText.className = 'text-[10px] text-teal-400/70 truncate italic';
-            if (card) card.classList.add('border-teal-600/30');
+            taskText.classList.remove('text-[#64748B]');
+            taskText.classList.add('text-[#0D9488]', 'font-medium');
         } else if (status === 'error') {
-            dot.className = 'w-1.5 h-1.5 rounded-full bg-red-500';
+            card.classList.remove('working');
             statusText.textContent = 'ERROR';
-            statusText.className = 'text-[9px] font-bold text-red-500 uppercase';
-            if (card) card.classList.add('border-red-900/30');
+            statusText.className = 'status-pill error text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider';
+            taskText.classList.remove('text-[#0D9488]', 'font-medium');
+            taskText.classList.add('text-red-500');
         } else {
-            dot.className = 'w-1.5 h-1.5 rounded-full bg-gray-800';
+            card.classList.remove('working');
             statusText.textContent = 'IDLE';
-            statusText.className = 'text-[9px] font-bold text-gray-600 uppercase';
+            statusText.className = 'status-pill idle text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#64748B] uppercase tracking-wider';
             taskText.textContent = 'Waiting for task...';
-            taskText.className = 'text-[10px] text-gray-500 truncate italic';
-            if (card) card.classList.remove('border-teal-600/30', 'border-red-900/30');
+            taskText.classList.remove('text-[#0D9488]', 'font-medium', 'text-red-500');
+            taskText.classList.add('text-[#64748B]');
         }
     }
 
@@ -280,16 +370,16 @@
         activeFilter = f;
         document.querySelectorAll('.filter-btn').forEach(btn => {
             if (btn.id === `filter_${f}`) {
-                btn.classList.add('bg-teal-600', 'text-white');
-                btn.classList.remove('text-gray-500');
+                btn.classList.add('bg-[#0D9488]', 'text-white', 'shadow-sm', 'shadow-[#0D9488]/20');
+                btn.classList.remove('bg-[#F1F5F9]', 'text-[#64748B]');
             } else {
-                btn.classList.remove('bg-teal-600', 'text-white');
-                btn.classList.add('text-gray-500');
+                btn.classList.remove('bg-[#0D9488]', 'text-white', 'shadow-sm', 'shadow-[#0D9488]/20');
+                btn.classList.add('bg-[#F1F5F9]', 'text-[#64748B]');
             }
         });
 
         // Apply filter to existing rows
-        document.querySelectorAll('.log-entry').forEach(row => {
+        document.querySelectorAll('.log-row').forEach(row => {
             const agent = row.dataset.agent;
             const type = row.dataset.type;
             const isError = type.includes('error');
@@ -316,15 +406,15 @@
         panel.classList.remove('hidden');
 
         document.querySelectorAll('.agent-card').forEach(c => {
-            c.classList.toggle('border-teal-600/50', c.id === `agent_${key}`);
-            c.classList.toggle('bg-[#1a1a1a]', c.id === `agent_${key}`);
+            c.classList.toggle('ring-2', c.id === `agent_${key}`);
+            c.classList.toggle('ring-[#0D9488]/30', c.id === `agent_${key}`);
         });
     }
 
     function closePanel() {
         document.getElementById('agentPanel').classList.add('hidden');
         document.querySelectorAll('.agent-card').forEach(c => {
-            c.classList.remove('border-teal-600/50', 'bg-[#1a1a1a]');
+            c.classList.remove('ring-2', 'ring-[#0D9488]/30');
         });
         selectedAgent = null;
     }
@@ -335,14 +425,14 @@
         const btn = document.getElementById('runBtn');
         const oldText = btn.textContent;
         
-        btn.textContent = '⌛ Starting...';
+        btn.textContent = '⌛ Initializing...';
         btn.disabled = true;
 
         try {
             const res = await fetch(`/api/scheduler/run_now/${info.job}`, { method: 'POST' });
             const data = await res.json();
             if (data.success) {
-                showAlert(`${selectedAgent.replace(/_/g,' ')} started successfully`, 'success');
+                showAlert(`${selectedAgent.replace(/_/g,' ')} sequence started`, 'success');
                 addSystemLog(`Manual trigger: ${selectedAgent} sequence initiated.`);
             } else {
                 showAlert(data.message, 'error');
@@ -383,8 +473,8 @@
             const res = await fetch('/api/logs');
             const data = await res.json();
             if (data && data.length) {
-                // Reverse to show newest at top
-                data.slice().reverse().forEach(log => renderLog(log));
+                // Show in chronological order (oldest at top, newest at bottom)
+                data.forEach(log => renderLog(log));
             }
         } catch (e) {
             console.error('Failed to fetch log history');
@@ -406,25 +496,27 @@
             agent_name: 'System',
             log_type: 'SYSTEM',
             content: msg,
-            timestamp: new Date().toLocaleTimeString([], {hour12:false})
+            timestamp: null // Will be generated in renderLog
         });
     }
 
     function updateConnStatus(txt, colorClass) {
         const el = document.getElementById('connStatus');
         el.textContent = txt;
-        el.className = `text-[9px] font-bold uppercase ${colorClass}`;
+        el.className = `text-[10px] font-bold uppercase ${colorClass}`;
     }
 
     function clearFeed() {
         document.getElementById('logFeed').innerHTML = `
-            <div id="welcomeMsg" class="h-full flex flex-col items-center justify-center text-gray-700 opacity-50">
-                <div class="text-4xl mb-4">📡</div>
-                <p class="bebas tracking-widest text-xl">Feed Cleared</p>
-                <p class="text-[10px] mt-2">New logs will appear below</p>
+            <div id="welcomeMsg" class="h-full flex flex-col items-center justify-center text-[#94A3B8] opacity-60">
+                <div class="text-5xl mb-4">📡</div>
+                <p class="bebas tracking-[0.2em] text-2xl text-[#1A1A2E]">Feed Cleared</p>
+                <p class="text-[11px] mt-2 font-medium">Listening for new signals...</p>
             </div>
         `;
         logCount = 0;
+        document.getElementById('totalLogCount').textContent = '0';
+        document.getElementById('logCountBadge').textContent = '0 LOGS';
     }
 
     async function runTest() {

@@ -3,7 +3,7 @@ from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime 
 import threading 
 import config 
-import time
+import time 
  
 scheduler = BackgroundScheduler(timezone="Asia/Kolkata") 
 _app = None 
@@ -72,14 +72,14 @@ def run_content_creation():
             s = Strategist() 
             brief = s.morning_brief() 
             broadcast_log("Strategist", "BRIEF READY", f"Brief: {brief.get('product_name')} — {brief.get('creative_angle','')[:80]}") 
-            time.sleep(3) # Rate limit protection
+            time.sleep(3) # Rate limit protection 
  
             # Step 2 — Write caption 
             broadcast_log("Copywriter", "WORKING", "Writing Hinglish caption — 3 layer process starting...") 
             c = Copywriter() 
             caption = c.write_caption(brief) 
             broadcast_log("Copywriter", "CAPTION READY", f"Caption written: {caption[:100]}...") 
-            time.sleep(3) # Rate limit protection
+            time.sleep(3) # Rate limit protection 
  
             # Step 3 — Director review 
             broadcast_log("Director", "REVIEWING", "Reviewing content — checking all 6 criteria...") 
@@ -89,7 +89,7 @@ def run_content_creation():
             score = review.get("overall", 0) 
             broadcast_log("Director", "APPROVED" if approved else "REJECTED", 
                          f"Score: {score}/10 — {'APPROVED ✅' if approved else 'NEEDS REVISION ❌'}") 
-            time.sleep(3) # Rate limit protection
+            time.sleep(3) # Rate limit protection 
  
             # Step 4 — Save post to database 
             post = Post( 
@@ -115,24 +115,42 @@ def run_content_creation():
             db.session.commit() 
             broadcast_log("System", "POST SAVED", f"Post #{post.id} ready — Score: {review.get('overall',0)}/10") 
  
-            # Step 5 — Send to Telegram if approved 
+            # Step 5 — Designer builds visual assets 
+            broadcast_log("Designer", "WORKING", f"Starting visual pipeline for Post #{post.id}...") 
+            try: 
+                from ai_team.designer import Designer 
+                designer = Designer() 
+                assets   = designer.create_post_assets(brief, caption, post_id=post.id) 
+                image_path = assets.get("final_image", "") 
+                if assets.get("success"): 
+                    broadcast_log("Designer", "VISUAL COMPLETE", 
+                        f"Post #{post.id} image ready — {image_path}") 
+                else: 
+                    broadcast_log("Designer", "WARNING", 
+                        f"Visual pipeline used fallback — upload product images at /products") 
+            except Exception as de: 
+                image_path = "" 
+                broadcast_log("Designer", "ERROR", f"Designer failed: {str(de)[:100]}") 
+            time.sleep(2) 
+ 
+            # Step 6 — Send to Telegram if approved 
             if approved: 
                 try: 
                     from distribution.telegram_bot import send_post_preview 
                     send_post_preview( 
                         post_id        = post.id, 
-                        image_path     = None, 
+                        image_path     = image_path, 
                         caption        = caption, 
                         director_score = score, 
                         ad_ready       = review.get("ad_ready", False), 
                         scheduled_time = "Tonight 8:30 PM" 
                     ) 
-                    broadcast_log("Telegram", "SENT", f"Post #{post.id} preview sent to your Telegram") 
+                    broadcast_log("Telegram", "SENT", f"Post #{post.id} preview sent to Telegram with image") 
                 except Exception as te: 
                     print(f"Telegram error: {te}") 
  
-            return {"success": True, "post_id": post.id} 
- 
+            return {"success": True, "post_id": post.id, "image_path": image_path} 
+  
         except Exception as e: 
             print(f"Content creation error: {e}") 
             import traceback 
@@ -171,77 +189,28 @@ def run_weather_check():
             print(f"Weather check error: {e}") 
  
 def run_analytics_collection(): 
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Analytics collection running...") 
-    app = get_app() 
-    with app.app_context(): 
-        try: 
-            from data.database import db, Post, Analytics 
-            from dashboard.socketio_events import broadcast_log 
- 
-            posts = Post.query.filter_by(status="posted").all() 
-            total_reach    = sum(p.ig_reach    or 0 for p in posts) 
-            total_likes    = sum(p.ig_likes    or 0 for p in posts) 
-            total_comments = sum(p.ig_comments or 0 for p in posts) 
-            total_saves    = sum(p.ig_saves    or 0 for p in posts) 
- 
-            analytics = Analytics( 
-                platform  = "instagram", 
-                reach     = total_reach, 
-                likes     = total_likes, 
-                comments  = total_comments, 
-                saves     = total_saves, 
-                followers = 12100 
-            ) 
-            db.session.add(analytics) 
-            db.session.commit() 
-            broadcast_log("Analyst", "ANALYTICS", f"Collected — Reach: {total_reach} Likes: {total_likes}") 
- 
-        except Exception as e: 
-            print(f"Analytics error: {e}") 
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Analytics collection running via analytics_engine...") 
+    try: 
+        from data.analytics_engine import run_analytics_collection as _run 
+        _run() 
+    except Exception as e: 
+        print(f"Analytics engine error: {e}") 
+        import traceback; traceback.print_exc() 
  
 def run_competitor_scan(): 
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Competitor scan running...") 
-    app = get_app() 
-    with app.app_context(): 
-        try: 
-            from data.database import db, Competitor 
-            from dashboard.socketio_events import broadcast_log 
- 
-            # Seed known competitors if none exist 
-            if Competitor.query.count() == 0: 
-                known = [ 
-                    {"instagram_handle": "@wildcraft", "brand_name": "Wildcraft India", "followers": 89400}, 
-                    {"instagram_handle": "@decathlonin", "brand_name": "Decathlon India", "followers": 245000}, 
-                    {"instagram_handle": "@columbiaindiaofficial", "brand_name": "Columbia India", "followers": 34000}, 
-                    {"instagram_handle": "@rainsindia", "brand_name": "RAINS India", "followers": 12000}, 
-                    {"instagram_handle": "@quechuaindia", "brand_name": "Quechua India", "followers": 28000}, 
-                ] 
-                for comp in known: 
-                    c = Competitor( 
-                        instagram_handle = comp["instagram_handle"], 
-                        brand_name       = comp["brand_name"], 
-                        followers        = comp["followers"], 
-                        avg_engagement   = 2.4, 
-                        content_gaps     = "No biker content, no delivery partner angle, no Hinglish captions", 
-                        active           = True 
-                    ) 
-                    db.session.add(c) 
-                db.session.commit() 
-                broadcast_log("Growth Hacker", "COMPETITORS FOUND", f"Seeded {len(known)} Indian rainwear competitors") 
- 
-            from ai_team.growth_hacker import GrowthHacker 
-            g = GrowthHacker() 
-            gaps = g.find_gaps() 
-            broadcast_log("Growth Hacker", "GAP ANALYSIS", f"Gaps found: {str(gaps)[:200]}") 
- 
-        except Exception as e: 
-            print(f"Competitor scan error: {e}") 
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Competitor scan running via competitor_engine...") 
+    try: 
+        from data.competitor_engine import run_competitor_scan as _run 
+        _run() 
+    except Exception as e: 
+        print(f"Competitor engine error: {e}") 
+        import traceback; traceback.print_exc() 
  
 def seed_initial_data(): 
     app = get_app() 
     with app.app_context(): 
         try: 
-            from data.database import db, Analytics, Notification 
+            from data.database import db, Analytics, Competitor, Notification 
             from datetime import timedelta 
  
             if Analytics.query.count() == 0: 
@@ -263,8 +232,8 @@ def seed_initial_data():
             if Notification.query.count() == 0: 
                 n = Notification( 
                     type    = "info", 
-                    title   = "RF Agent Started", 
-                    message = "Your AI team is online and working automatically.", 
+                    title   = "RF Agent is Live!", 
+                    message = "Your AI team is online. Click Generate Post Now in Pipeline to create your first post.", 
                     urgent  = False, 
                     read    = False 
                 ) 
@@ -275,104 +244,49 @@ def seed_initial_data():
         except Exception as e: 
             print(f"Seed error: {e}") 
  
-def run_full_agent_cycle(): 
-    """Runs every 6 hours — full pipeline: brief + caption + review""" 
-    print(f"\n[{datetime.now().strftime('%H:%M')}] 🔄 Running scheduled agent cycle...") 
-    run_content_creation() 
- 
-def run_planning_cycle(timeframe="week"):
-    """Runs a planning cycle for the strategist"""
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Planning cycle started for {timeframe}")
-    app = get_app()
-    with app.app_context():
-        try:
-            from ai_team.strategist import Strategist
-            s = Strategist()
-            s.make_plan(timeframe)
-        except Exception as e:
-            print(f"Planning error: {e}")
- 
-def startup_sequence(): 
-    """Runs immediately when server starts — seeds data and begins agent work""" 
-    import time 
-    time.sleep(5)  # Wait for Flask to fully start 
- 
-    print("\n" + "="*50) 
-    print("🚀 STARTUP SEQUENCE BEGINNING") 
-    print("="*50) 
- 
-    # Step 1 — Seed initial data 
-    seed_initial_data() 
-    print("✅ Data seeded") 
- 
-    # Step 2 — Competitor scan 
-    run_competitor_scan() 
-    print("✅ Competitors loaded") 
- 
-    # Step 3 — Check if we need a post today 
-    app = get_app() 
-    with app.app_context(): 
-        from data.database import Post 
-        from datetime import date 
-        today_posts = Post.query.filter( 
-            Post.date >= datetime.utcnow().replace( 
-                hour=0, minute=0, second=0) 
-        ).count() 
- 
-        if today_posts == 0: 
-            print("📝 No posts today — starting content creation...") 
-            run_content_creation() 
-        else: 
-            print(f"✅ {today_posts} posts already created today") 
- 
-    print("="*50) 
-    print("🎯 Startup sequence complete — agents running") 
-    print("="*50 + "\n") 
- 
 def setup_scheduler(): 
-    # ── DAILY SCHEDULED JOBS ────────────────────── 
-    scheduler.add_job(run_morning_brief, 
-        CronTrigger(hour=2, minute=0), 
-        id="morning_brief", replace_existing=True) 
- 
-    scheduler.add_job(run_content_creation, 
-        CronTrigger(hour=3, minute=0), 
-        id="content_creation", replace_existing=True) 
- 
-    scheduler.add_job(run_auto_post_job, 
-        CronTrigger(hour=8, minute=30), 
-        id="auto_post_morning", replace_existing=True) 
- 
-    scheduler.add_job(run_auto_post_job, 
-        CronTrigger(hour=20, minute=30), 
-        id="auto_post_evening", replace_existing=True) 
- 
-    scheduler.add_job(run_weather_check, 
-        "interval", minutes=30, 
-        id="weather_check", replace_existing=True) 
- 
-    scheduler.add_job(run_analytics_collection, 
-        "interval", hours=2, 
-        id="analytics", replace_existing=True) 
- 
-    scheduler.add_job(run_competitor_scan, 
-        CronTrigger(hour=1, minute=0), 
-        id="competitor_scan", replace_existing=True) 
- 
-    # ── CONTINUOUS IMPROVEMENT LOOP ─────────────── 
-    # Runs every 6 hours — keeps agents working around the clock 
-    scheduler.add_job(run_full_agent_cycle, 
-        "interval", hours=6, 
-        id="full_cycle", replace_existing=True) 
+    # Morning brief — 2AM IST 
+    scheduler.add_job(run_morning_brief, CronTrigger(hour=2, minute=0), 
+                      id="morning_brief", replace_existing=True) 
+    # Content creation — 3AM IST 
+    scheduler.add_job(run_content_creation, CronTrigger(hour=3, minute=0), 
+                      id="content_creation", replace_existing=True) 
+    # Auto post morning — 8:30AM IST 
+    scheduler.add_job(run_auto_post_job, CronTrigger(hour=8, minute=30), 
+                      id="auto_post_morning", replace_existing=True) 
+    # Auto post evening — 8:30PM IST 
+    scheduler.add_job(run_auto_post_job, CronTrigger(hour=20, minute=30), 
+                      id="auto_post_evening", replace_existing=True) 
+    # Weather — every 30 mins 
+    scheduler.add_job(run_weather_check, "interval", minutes=30, 
+                      id="weather_check", replace_existing=True) 
+    # Analytics — every 2 hours 
+    scheduler.add_job(run_analytics_collection, "interval", hours=2, 
+                      id="analytics", replace_existing=True) 
+    # Competitor scan — daily 1AM 
+    scheduler.add_job(run_competitor_scan, CronTrigger(hour=1, minute=0), 
+                      id="competitor_scan", replace_existing=True) 
+    # Learning engine — runs at 4AM daily after content creation 
+    scheduler.add_job(run_learning_cycle, CronTrigger(hour=4, minute=0), 
+                      id="learning_cycle", replace_existing=True) 
  
     scheduler.start() 
-    print("✅ Scheduler started — all jobs active") 
+    print("✅ Scheduler started") 
  
-    # ── RUN IMMEDIATELY ON STARTUP ───────────────── 
-    # These run as soon as server starts — no waiting 
-    threading.Thread(target=startup_sequence, daemon=True).start() 
+    # Run immediately on startup 
+    threading.Thread(target=seed_initial_data, daemon=True).start() 
+    threading.Thread(target=run_competitor_scan, daemon=True).start() 
  
     return scheduler 
+ 
+def run_learning_cycle(): 
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Learning cycle running via learning_engine...") 
+    try: 
+        from data.learning_engine import run_learning_cycle as _run 
+        _run() 
+    except Exception as e: 
+        print(f"Learning engine error: {e}") 
+        import traceback; traceback.print_exc() 
  
 def run_auto_post_job(): 
     app = get_app() 
@@ -380,13 +294,9 @@ def run_auto_post_job():
         try: 
             from data.database import db, Post 
             from dashboard.socketio_events import broadcast_log 
-            approved_posts = Post.query.filter_by( 
+            approved = Post.query.filter_by( 
                 status="approved", owner_approved=True).all() 
-            if not approved_posts:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] Auto-post: No approved posts to publish.")
-                return
-
-            for post in approved_posts: 
+            for post in approved: 
                 broadcast_log("System", "POSTING", f"Posting Post #{post.id} to Instagram...") 
                 post.status    = "posted" 
                 post.posted_at = datetime.utcnow() 
@@ -394,7 +304,6 @@ def run_auto_post_job():
                 broadcast_log("System", "POSTED", f"Post #{post.id} marked as posted") 
         except Exception as e: 
             print(f"Auto post error: {e}") 
-            broadcast_log("System", "ERROR", f"Auto-post failed: {str(e)}") 
  
 def get_scheduler_status(): 
     jobs = [] 

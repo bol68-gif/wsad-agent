@@ -66,7 +66,7 @@ def ads():
 # @login_required  # DEV MODE
 def weather():
     alerts = WeatherAlert.query.order_by(WeatherAlert.timestamp.desc()).limit(10).all()
-    return render_template("weather.html", alerts=alerts, cities=config.BRAND["target_cities"])
+    return render_template("weather.html", alerts=alerts, cities=config.BRAND["cities"])
 
 @routes_bp.route("/competitors")
 # @login_required  # DEV MODE
@@ -77,13 +77,19 @@ def competitors():
 @routes_bp.route("/notifications")
 # @login_required  # DEV MODE
 def notifications():
-    all_notifications = Notification.query.order_by(Notification.timestamp.desc()).all()
+    # Limit to last 50 notifications for performance
+    all_notifications = Notification.query.order_by(Notification.timestamp.desc()).limit(50).all()
     return render_template("notifications.html", notifications=all_notifications)
 
 @routes_bp.route("/brand")
 # @login_required  # DEV MODE
 def brand():
     return render_template("brand.html", brand=config.BRAND)
+
+@routes_bp.route("/editor")
+# @login_required  # DEV MODE
+def editor():
+    return render_template("editor.html")
 
 @routes_bp.route("/settings")
 # @login_required  # DEV MODE

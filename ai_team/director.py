@@ -130,9 +130,6 @@ Return ONLY this JSON — no other text:
             send_message("⚠️ Director stuck after 3 attempts — resetting to proven template. Check logs.")
         except:
             pass
-```
-
----
 
 ## FILE 7 of 7 — `dashboard/templates/logs.html`
 

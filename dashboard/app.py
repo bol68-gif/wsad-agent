@@ -13,7 +13,9 @@ socketio  = SocketIO()
 limiter   = Limiter(key_func=get_remote_address) 
 
 def create_app(): 
+    global _app_instance
     app = Flask(__name__, template_folder="templates", static_folder="static") 
+    _app_instance = app
 
     app.config["SECRET_KEY"]                     = config.SECRET_KEY 
     app.config["SQLALCHEMY_DATABASE_URI"]        = "sqlite:///" + str(config.DATABASE_PATH) 

@@ -3,6 +3,7 @@ from flask_login import login_required
 from data.database import db, Post, Log, Analytics, WeatherAlert, Notification, OwnerInput, Settings 
 from datetime import datetime 
 import config 
+import os 
 
 api_bp = Blueprint("api", __name__) 
 
@@ -222,6 +223,13 @@ def agents_status():
         ).count() 
     }) 
  
+@api_bp.route("/weather")
+@login_required
+def get_weather_alerts():
+    from data.database import WeatherAlert
+    alerts = WeatherAlert.query.order_by(WeatherAlert.timestamp.desc()).limit(20).all()
+    return jsonify([a.to_dict() for a in alerts])
+
 @api_bp.route("/weather/current") 
 @login_required 
 def current_weather(): 
@@ -449,22 +457,32 @@ def get_products():
     return jsonify([p.to_dict() for p in products]) 
 
 # ── COMPETITORS ─────────────────────────────────────── 
+@api_bp.route("/competitors/gap_analysis")
+@login_required
+def get_gap_analysis():
+    from data.competitor_engine import run_gap_analysis
+    # In a real app, you'd fetch the latest saved analysis. 
+    # For now, let's run it or return fallback.
+    analysis = run_gap_analysis()
+    return jsonify(analysis)
+
 @api_bp.route("/competitors/all") 
 @login_required 
 def get_competitors(): 
-    from data.database import Competitor 
-    competitors = Competitor.query.filter_by(active=True).all() 
+    from data.competitor_engine import get_competitor_summary, run_competitor_scan 
+    competitors = get_competitor_summary() 
     if not competitors: 
-        # Auto-seed if empty 
-        from scheduler import run_competitor_scan 
         import threading 
         threading.Thread(target=run_competitor_scan, daemon=True).start() 
         return jsonify([]) 
-    return jsonify([c.to_dict() for c in competitors]) 
+    return jsonify(competitors) 
 
 @api_bp.route("/competitors/scan", methods=["POST"]) 
 @login_required 
 def scan_competitors(): 
+    from data.competitor_engine import run_competitor_scan 
+    import threading 
+    threading.Thread(target=run_competitor_scan, daemon=True).start() 
     return jsonify({"success": True, 
                     "message": "Competitor scan started — check logs page for updates"}) 
 
@@ -618,3 +636,160 @@ def test_socket():
     broadcast_agent_status("Copywriter", "working", "Testing socket connection") 
     broadcast_agent_status("Director",   "working", "Testing socket connection") 
     return jsonify({"success": True, "message": "Test logs sent — check logs page!"}) 
+
+# ── EDITOR API ENDPOINTS ──────────────────────────────────────────── 
+ 
+@api_bp.route("/editor/save_post", methods=["POST"]) 
+def editor_save_post(): 
+    """ 
+    Saves an image from the editor directly into the Post pipeline. 
+    Receives: multipart form with image blob + post metadata. 
+    """ 
+    try: 
+        from data.database import db, Post 
+        from datetime import datetime 
+        import config 
+ 
+        # Get image file 
+        if 'image' not in request.files: 
+            return jsonify({"success": False, "message": "No image provided"}) 
+ 
+        image_file = request.files['image'] 
+        product    = request.form.get('product', 'RF Product') 
+        price      = request.form.get('price', '') 
+        template   = request.form.get('template', 'dark_cinematic') 
+        caption    = request.form.get('caption', '') 
+ 
+        # Save image to generated folder 
+        os.makedirs(config.GENERATED_DIR, exist_ok=True) 
+        timestamp  = int(__import__('time').time()) 
+        filename   = f"editor_post_{timestamp}.png" 
+        image_path = os.path.join(config.GENERATED_DIR, filename) 
+        image_file.save(image_path) 
+ 
+        # Create Post record 
+        post = Post( 
+            product_name   = product, 
+            category       = "Editor", 
+            caption        = caption, 
+            image_path     = image_path, 
+            director_score = 0.0, 
+            hook_score     = 0.0, 
+            visual_score   = 0.0, 
+            caption_score  = 0.0, 
+            strategy_score = 0.0, 
+            brand_score    = 0.0, 
+            conversion_score = 0.0, 
+            director_note  = "Created in Post Editor — awaiting Director review", 
+            ad_ready       = False, 
+            ad_budget      = "", 
+            status         = "pending", 
+            post_type      = "static", 
+            scheduled_time = datetime.utcnow(), 
+        ) 
+        db.session.add(post) 
+        db.session.commit() 
+ 
+        # Broadcast to logs 
+        from dashboard.socketio_events import broadcast_log 
+        broadcast_log("Designer", "EDITOR POST SAVED", 
+            f"📸 Post #{post.id} created in editor — Product: {product} | " 
+            f"Go to Pipeline to review and approve" 
+        ) 
+ 
+        # Run Director review in background 
+        import threading 
+        def run_director_review(): 
+            try: 
+                from ai_team.director import Director 
+                from ai_team.strategist import Strategist 
+                from dashboard.app import get_app 
+                app = get_app() 
+                with app.app_context(): 
+                    brief = { 
+                        "product_name":    product, 
+                        "price":           price, 
+                        "template":        template, 
+                        "creative_angle":  caption[:100] if caption else "Editor post", 
+                        "primary_persona": "Urban Indian buyer", 
+                        "psychological_trigger": "Quality + Trust", 
+                    } 
+                    d      = Director() 
+                    review = d.review_content(caption or "No caption yet", template, brief) 
+                    approved = d.approve_or_reject(review) 
+ 
+                    from data.database import db, Post 
+                    p = Post.query.get(post.id) 
+                    if p: 
+                        p.director_score   = review.get("overall", 0) 
+                        p.hook_score       = review.get("hook_score", 0) 
+                        p.visual_score     = review.get("visual_score", 0) 
+                        p.caption_score    = review.get("caption_score", 0) 
+                        p.strategy_score   = review.get("strategy_score", 0) 
+                        p.brand_score      = review.get("brand_score", 0) 
+                        p.conversion_score = review.get("conversion_score", 0) 
+                        p.director_note    = review.get("director_note", "") 
+                        p.ad_ready         = review.get("ad_ready", False) 
+                        p.status           = "pending" 
+                        db.session.commit() 
+ 
+                    broadcast_log("Director", "REVIEWED", 
+                        f"Editor Post #{post.id} reviewed — Score: {review.get('overall',0)}/10" 
+                    ) 
+            except Exception as e: 
+                broadcast_log("Director", "ERROR", 
+                    f"Director review failed for editor post: {str(e)[:100]}") 
+ 
+        threading.Thread(target=run_director_review, daemon=True).start() 
+ 
+        return jsonify({ 
+            "success": True, 
+            "post_id": post.id, 
+            "message": f"Post saved to pipeline — Director reviewing now" 
+        }) 
+ 
+    except Exception as e: 
+        return jsonify({"success": False, "message": str(e)[:200]}) 
+ 
+ 
+@api_bp.route("/editor/generate_caption", methods=["POST"]) 
+def editor_generate_caption(): 
+    """ 
+    Calls Groq via Copywriter agent to generate a caption for editor post. 
+    """ 
+    try: 
+        data     = request.get_json() 
+        product  = data.get('product', 'RF Product') 
+        price    = data.get('price', '') 
+        template = data.get('template', 'dark_cinematic') 
+ 
+        brief = { 
+            "product_name":          product, 
+            "price":                 price, 
+            "template":              template, 
+            "creative_angle":        f"Why {product} is essential for Indian monsoon", 
+            "caption_tone":          "Bold, urgent, Hinglish", 
+            "psychological_trigger": "Pain + Identity", 
+            "primary_persona":       "Urban Indian — biker, delivery partner, professional", 
+        } 
+ 
+        from ai_team.copywriter import Copywriter 
+        import threading 
+ 
+        caption_holder = {"caption": ""} 
+ 
+        def generate(): 
+            c = Copywriter() 
+            caption_holder["caption"] = c.write_caption(brief) or "" 
+ 
+        t = threading.Thread(target=generate) 
+        t.start() 
+        t.join(timeout=30)  # 30 second timeout 
+ 
+        if caption_holder["caption"]: 
+            return jsonify({"success": True, "caption": caption_holder["caption"]}) 
+        else: 
+            return jsonify({"success": False, "message": "Caption generation timed out"}) 
+ 
+    except Exception as e: 
+        return jsonify({"success": False, "message": str(e)[:200]})
