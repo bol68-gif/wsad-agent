@@ -316,22 +316,28 @@
  
  // ── LOAD PIPELINE ──────────────────────────────── 
  async function loadPipeline() { 
-   const pending  = await apiCall('/api/posts/pending'); 
-   const posted   = await apiCall('/api/posts/posted'); 
-   const approved = (pending || []).filter(function(p) { return p.status === 'approved'; }); 
-   const realPend = (pending || []).filter(function(p) { return p.status === 'pending' || p.status === 'needs_revision'; }); 
+   try {
+     const pending  = await apiCall('/api/posts/pending'); 
+     const posted   = await apiCall('/api/posts/posted'); 
+     const pendingArr = pending || [];
+     const postedArr = posted || [];
+     const approved = pendingArr.filter(function(p) { return p.status === 'approved'; }); 
+     const realPend = pendingArr.filter(function(p) { return p.status === 'pending' || p.status === 'needs_revision'; }); 
  
-   renderPending(realPend); 
-   renderApproved(approved); 
-   renderPosted(posted || []); 
+     renderPending(realPend); 
+     renderApproved(approved); 
+     renderPosted(postedArr); 
  
-   document.getElementById('pendingCount').textContent  = realPend.length; 
-   document.getElementById('approvedCount').textContent = approved.length; 
-   document.getElementById('postedCount').textContent   = (posted || []).length; 
+     document.getElementById('pendingCount').textContent  = realPend.length; 
+     document.getElementById('approvedCount').textContent = approved.length; 
+     document.getElementById('postedCount').textContent   = postedArr.length; 
  
-   if (realPend.length > 0) { 
-     setStatus('idle', 'READY'); 
-   } 
+     if (realPend.length > 0) { 
+       setStatus('idle', 'READY'); 
+     } 
+   } catch (e) {
+     console.error("Failed to load pipeline:", e);
+   }
  } 
  
  // ── RENDER PENDING ─────────────────────────────── 
@@ -394,16 +400,16 @@
  function renderPostCard(post, showActions) { 
    const score = post.director_score || 0; 
    const scoreColor = score >= 8.5 ? '#008080' : '#f59e0b'; 
-    
-   return ` 
-     <div class="post-card"> 
-       <div style="display:grid;grid-template-columns:300px 1fr 300px;min-height:400px"> 
-         <!-- Image --> 
-         <div style="background:#0a0a0a;display:flex;align-items:center;justify-content:center;border-right:1px solid #1a1a1a"> 
-           <img src="${post.image_path || '/static/img/placeholder.png'}"  
-                style="max-width:100%;max-height:100%;object-fit:contain" 
-                onerror="this.src='/static/img/placeholder.png'"> 
-         </div> 
+     
+    return ` 
+      <div class="post-card"> 
+        <div style="display:grid;grid-template-columns:300px 1fr 300px;min-height:400px"> 
+          <!-- Image --> 
+          <div style="background:#0a0a0a;display:flex;align-items:center;justify-content:center;border-right:1px solid #1a1a1a"> 
+            <img src="${post.image_path ? '/generated/' + post.image_path.split(/[\\/]/).pop() : '/static/img/placeholder.png'}"  
+                 style="max-width:100%;max-height:100%;object-fit:contain" 
+                 onerror="this.src='/static/img/placeholder.png'"> 
+          </div> 
           
          <!-- Content --> 
          <div style="padding:24px;display:flex;flex-direction:column;border-right:1px solid #1a1a1a"> 

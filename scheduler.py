@@ -244,6 +244,68 @@ def seed_initial_data():
         except Exception as e: 
             print(f"Seed error: {e}") 
  
+def startup_content_check(): 
+    """Auto-starts content creation if no posts today""" 
+    import time 
+    time.sleep(15) 
+    app = get_app() 
+    with app.app_context(): 
+        from data.database import Post 
+        from dashboard.socketio_events import broadcast_log 
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0) 
+        count = Post.query.filter(Post.scheduled_time >= today).count() 
+        if count == 0: 
+            broadcast_log("System", "STARTUP", 
+                "No posts today — auto-starting content creation...") 
+            run_content_creation() 
+        else: 
+            broadcast_log("System", "STARTUP", 
+                f"{count} posts already exist today — agents on standby") 
+ 
+def get_recent_posts_context(): 
+    """Returns last 14 posts so agents never repeat""" 
+    app = get_app() 
+    with app.app_context(): 
+        from data.database import Post 
+        posts = Post.query.order_by(Post.scheduled_time.desc()).limit(14).all() 
+        return [ 
+            { 
+                "product": p.product_name, 
+                "category": p.category, 
+                "template": p.template_used or "unknown", 
+                "score": p.director_score or 0, 
+                "date": p.scheduled_time.strftime("%A %d %b") if p.scheduled_time else "", 
+                "post_type": p.post_type or "static" 
+            } 
+            for p in posts 
+        ] 
+ 
+def run_monthly_plan(): 
+    """Analyst creates a 30-day content plan — runs 1st of every month""" 
+    app = get_app() 
+    with app.app_context(): 
+        try: 
+            from ai_team.analyst import Analyst 
+            from dashboard.socketio_events import broadcast_log 
+            broadcast_log("Analyst", "MONTHLY PLAN", 
+                "Creating 30-day content calendar...") 
+            a = Analyst() 
+            plan = a.create_monthly_plan() 
+            broadcast_log("Analyst", "PLAN READY", 
+                f"30-day plan created — {len(plan.get('weeks',[]))} weeks planned") 
+            # Save to settings 
+            from data.database import db, Settings 
+            setting = Settings.query.filter_by( 
+                key="monthly_plan").first() 
+            if not setting: 
+                setting = Settings(key="monthly_plan") 
+                db.session.add(setting) 
+            import json 
+            setting.value = json.dumps(plan) 
+            db.session.commit() 
+        except Exception as e: 
+            print(f"Monthly plan error: {e}") 
+ 
 def setup_scheduler(): 
     # Morning brief — 2AM IST 
     scheduler.add_job(run_morning_brief, CronTrigger(hour=2, minute=0), 
@@ -269,15 +331,34 @@ def setup_scheduler():
     # Learning engine — runs at 4AM daily after content creation 
     scheduler.add_job(run_learning_cycle, CronTrigger(hour=4, minute=0), 
                       id="learning_cycle", replace_existing=True) 
+    # Every 6 hours — keeps posts flowing all day 
+    scheduler.add_job(run_content_creation, "interval", hours=6, 
+                      id="content_cycle", replace_existing=True) 
+    # Monthly plan — 1st of every month at midnight 
+    scheduler.add_job(run_monthly_plan, CronTrigger(day=1, hour=0, minute=0), 
+                      id="monthly_plan", replace_existing=True) 
  
     scheduler.start() 
-    print("✅ Scheduler started") 
+    print("✅ Scheduler started — all jobs active") 
  
     # Run immediately on startup 
     threading.Thread(target=seed_initial_data, daemon=True).start() 
     threading.Thread(target=run_competitor_scan, daemon=True).start() 
+    threading.Thread(target=startup_content_check,  daemon=True).start() 
+    # Generate monthly plan on startup if none exists 
+    threading.Thread(target=_check_monthly_plan,    daemon=True).start() 
  
     return scheduler 
+ 
+def _check_monthly_plan(): 
+    import time 
+    time.sleep(30) 
+    app = get_app() 
+    with app.app_context(): 
+        from data.database import Settings 
+        existing = Settings.query.filter_by(key="monthly_plan").first() 
+        if not existing or not existing.value: 
+            run_monthly_plan() 
  
 def run_learning_cycle(): 
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Learning cycle running via learning_engine...") 

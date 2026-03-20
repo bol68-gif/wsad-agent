@@ -30,6 +30,9 @@
          <span class="flex items-center gap-1.5 text-gray-400"> 
              <span class="w-3 h-3 rounded-full bg-gray-500 inline-block"></span> Empty 
          </span> 
+         <span class="flex items-center gap-1.5 text-gray-400"> 
+             <span class="w-3 h-3 rounded-full bg-[#1a3333] border border-[#005f5f] inline-block"></span> Planned 
+         </span> 
      </div> 
  
      <!-- Calendar Grid --> 
@@ -67,6 +70,24 @@
  async function loadCalendar(year, month) { 
      const data = await apiCall(`/api/calendar/${year}/${month}`); 
      renderCalendar(year, month, data || []); 
+     await loadMonthlyPlan();
+ } 
+
+ async function loadMonthlyPlan() { 
+     try { 
+         const data = await apiCall('/api/monthly_plan'); 
+         if (!data || !data.weeks) return; 
+         // Mark planned days on calendar with different color 
+         data.weeks.forEach(week => { 
+             week.days.forEach(day => { 
+                 const cell = document.querySelector(`[onclick="showDayDetail(${day.date})"]`); 
+                 if (cell && !cell.innerHTML.includes('text-teal-400')) { 
+                     cell.style.borderColor = '#1a3333'; 
+                     cell.innerHTML += `<div style="font-size:8px;color:#005f5f;margin-top:2px;font-weight:700">${day.product.split(' ')[0]}</div>`; 
+                 } 
+             }); 
+         }); 
+     } catch(e) {} 
  } 
  
  function renderCalendar(year, month, posts) { 

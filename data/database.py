@@ -71,7 +71,7 @@ class Post(db.Model):
     ig_clicks = db.Column(db.Integer, default=0)
     posted_at = db.Column(db.DateTime)
     ad_ready = db.Column(db.Boolean, default=False)
-    ad_budget = db.Column(db.Float, default=0.0)
+    ad_budget = db.Column(db.String(50), default="0.0")
     status = db.Column(db.String(20), default="pending") # pending, approved, posted, skipped
     post_type = db.Column(db.String(20)) # image, reel, story
     scheduled_time = db.Column(db.DateTime)

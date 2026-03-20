@@ -30,6 +30,7 @@ BRAND = {
         "body": "Montserrat",
     },
     "cities": ["Mumbai", "Pune", "Bangalore", "Delhi", "Chennai", "Hyderabad"],
+    "target_cities": ["Mumbai","Pune","Bangalore","Delhi","Chennai","Hyderabad"], 
     "voice": "Bold, direct, Hinglish, never corporate, never generic",
     "usps": [
         "Heat sealed seams — zero needle holes",
@@ -39,12 +40,21 @@ BRAND = {
         "Reflective strips for night safety",
         "Made in India — Pelhar Factory Bhiwandi",
     ],
-    "products": [
-        {"name": "Elite Raincoat", "category": "Men", "price": 1299},
-        {"name": "Pro Biker Suit", "category": "Biker", "price": 1899},
-        {"name": "Urban Poncho", "category": "Women", "price": 999},
-        {"name": "Junior Splash", "category": "Kids", "price": 799}
-    ],
+    "products": [ 
+        {"name":"EliteShield Rain Set",   "category":"Biker",  "price":1599}, 
+        {"name":"Urban Rain Suit",        "category":"Men",    "price":1450}, 
+        {"name":"Classic Rain Set",       "category":"Men",    "price":1399}, 
+        {"name":"Pro Biker Rain Set",     "category":"Biker",  "price":1599}, 
+        {"name":"Women Long Rain Coat",   "category":"Women",  "price":1399}, 
+        {"name":"Kids Cartoon Rain Set",  "category":"Kids",   "price":899}, 
+        {"name":"Kids Solid Rain Set",    "category":"Kids",   "price":899}, 
+        {"name":"Kids Rain Suit",         "category":"Kids",   "price":999}, 
+        {"name":"Poncho",                 "category":"Unisex", "price":599}, 
+        {"name":"Windcheater",            "category":"Unisex", "price":799}, 
+        {"name":"Reversible Rain Jacket", "category":"Unisex", "price":1599}, 
+        {"name":"Hi-Vis Orange Safety",   "category":"Safety", "price":1199}, 
+        {"name":"Hi-Vis Green Safety",    "category":"Safety", "price":1199}, 
+    ], 
     "caption_language": "Hinglish — 60 percent Hindi 40 percent English",
     "caption_tone": "Bold, Urgent, Direct, Indian, Never Corporate",
 }

@@ -248,8 +248,30 @@ def current_weather():
 @login_required 
 def get_notifications(): 
     notifications = Notification.query.order_by( 
-        Notification.timestamp.desc()).limit(50).all() 
+        Notification.timestamp.desc()).limit(20).all() 
     return jsonify([n.to_dict() for n in notifications]) 
+
+# ── MONTHLY PLAN ────────────────────────────────────── 
+@api_bp.route("/monthly_plan") 
+@login_required 
+def get_monthly_plan(): 
+    from data.database import Settings 
+    import json 
+    setting = Settings.query.filter_by(key="monthly_plan").first() 
+    if setting and setting.value: 
+        try: 
+            return jsonify(json.loads(setting.value)) 
+        except: 
+            pass 
+    return jsonify({"weeks": [], "message": "No plan yet — generating..."}) 
+ 
+@api_bp.route("/monthly_plan/generate", methods=["POST"]) 
+@login_required 
+def generate_monthly_plan(): 
+    import threading 
+    from scheduler import run_monthly_plan 
+    threading.Thread(target=run_monthly_plan, daemon=True).start() 
+    return jsonify({"success": True, "message": "Monthly plan generating — check logs"}) 
 
 @api_bp.route("/notifications/unread_count") 
 @login_required 

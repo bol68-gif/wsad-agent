@@ -35,6 +35,10 @@ class Strategist(BaseAgent):
         return brief 
  
     def _find_todays_opportunity(self, day, context): 
+        # Get recent posts so we never repeat 
+        from scheduler import get_recent_posts_context 
+        recent_posts = get_recent_posts_context() 
+    
         task = f""" 
  Today is {day}. You are planning Instagram content for Relax Fashionwear. 
  
@@ -43,6 +47,9 @@ class Strategist(BaseAgent):
  This week reach: {context.get('week_reach', 0)} 
  This week likes: {context.get('week_likes', 0)} 
  Best performing post: {context.get('best_post', 'None yet')} 
+ 
+ LAST 14 POSTS MADE — DO NOT REPEAT THESE: 
+ {chr(10).join([f"- {p['date']}: {p['product']} ({p['category']}) | Template: {p['template']} | Score: {p['score']}/10" for p in recent_posts]) if recent_posts else 'No posts yet — this is the first one'} 
  
  CONTENT RHYTHM (follow this strictly): 
  Monday    = Factory/Manufacturing trust content 
@@ -70,17 +77,16 @@ class Strategist(BaseAgent):
  - Anti-sweat breathable design 
  - Reflective strips for night safety 
  
- Based on today being {day} and the content rhythm: 
- 1. What is the biggest opportunity today? 
- 2. Which specific customer is most likely to buy today? 
- 3. What emotional state are they in today specifically? 
- 4. What has NOT been done in recent posts? 
+ Based on the last 14 posts above and today being {day}: 
+ 1. Which product has NOT been featured recently? 
+ 2. Which audience segment has been neglected? 
+ 3. What specific customer pain point is most relevant today? 
+ 4. What unique angle has never been tried before? 
  
- Answer these 4 questions in detail. Be very specific. 
- Think like a CMO planning a campaign, not a social media manager posting randomly. 
+ Think like a CMO. Be very specific. Do not repeat anything from the last 14 posts. 
          """ 
         self.log_and_broadcast( 
-            f"Analysing {day}'s content opportunity...", 
+            f"Analysing {day}'s opportunity — checking last 14 posts for uniqueness...", 
             "WORKING" 
         ) 
         return self.call_gemini(task, context) 
