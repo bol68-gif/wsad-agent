@@ -5,8 +5,6 @@ import config
 import time
 import json
 
-client = Groq(api_key=config.GROQ_API_KEY)
-
 class BaseAgent:
     def __init__(self, name, role, personality):
         self.name        = name
@@ -93,39 +91,58 @@ YOUR TASK:
                     time.sleep(5)
         return ""
 
-    def _call_groq(self, prompt):
-        try:
-            if not config.GROQ_API_KEY:
-                self.log_and_broadcast(f"❌ [{self.name}] GROQ_API_KEY missing in .env", "ERROR")
-                return None
-            from groq import Groq
-            client = Groq(api_key=config.GROQ_API_KEY)
-
-            self.log_and_broadcast(f"🧠 [{self.name}] Sending {len(prompt)} char prompt to Groq llama-3.3-70b-versatile...", "WORKING")
-
-            response = client.chat.completions.create(
-                model       = self.model,
-                messages    = [{"role": "user", "content": prompt}],
-                max_tokens  = 2000,
-                temperature = 0.8
-            )
-            result = response.choices[0].message.content
-
-            self.log_and_broadcast(f"✅ [{self.name}] Groq responded — {len(result)} chars received", "SUCCESS")
-
-            # Broadcast full output in chunks — nothing cut off
-            chunks = [result[i:i+400] for i in range(0, min(len(result), 1600), 400)]
-            for idx, chunk in enumerate(chunks):
-                self.log_and_broadcast(
-                    f"📄 [{self.name}] OUTPUT part {idx+1}/{len(chunks)}: {chunk}",
-                    f"{self.name.upper()} OUTPUT"
-                )
-
-            return result
-
-        except Exception as e:
-            self.log_and_broadcast(f"❌ [{self.name}] Groq error: {str(e)[:200]}", "ERROR")
-            return None
+    def _call_groq(self, prompt): 
+        import config 
+        import time 
+        from groq import Groq 
+    
+        keys = config.GROQ_API_KEYS 
+        if not keys: 
+            self.log_and_broadcast("No Groq API keys configured", "ERROR") 
+            return None 
+    
+        for key_index, api_key in enumerate(keys): 
+            try: 
+                self.log_and_broadcast( 
+                    f"{self.name} calling Groq (key {key_index + 1}/{len(keys)})...", 
+                    "WORKING" 
+                ) 
+                client   = Groq(api_key=api_key) 
+                response = client.chat.completions.create( 
+                    model       = self.model, 
+                    messages    = [{"role": "user", "content": prompt}], 
+                    max_tokens  = 2000, 
+                    temperature = 0.8 
+                ) 
+                result = response.choices[0].message.content 
+                self.log_and_broadcast( 
+                    f"{self.name} got response — {len(result)} chars", 
+                    f"{self.name.upper()} OUTPUT" 
+                ) 
+                # Log full output in chunks 
+                for i, chunk in enumerate([result[j:j+400] for j in range(0, min(len(result),1600), 400)]): 
+                    self.log_and_broadcast(chunk, f"{self.name.upper()} OUTPUT") 
+                return result 
+    
+            except Exception as e: 
+                err = str(e) 
+                if "429" in err or "rate" in err.lower(): 
+                    self.log_and_broadcast( 
+                        f"Key {key_index+1} rate limited — trying next key...", 
+                        "WARNING" 
+                    ) 
+                    time.sleep(2) 
+                    continue 
+                else: 
+                    self.log_and_broadcast( 
+                        f"Key {key_index+1} error: {err[:100]}", 
+                        "ERROR" 
+                    ) 
+                    time.sleep(3) 
+                    continue 
+    
+        self.log_and_broadcast("All Groq keys exhausted", "ERROR") 
+        return None 
 
     def log(self, content, log_type="INFO"):
         try:

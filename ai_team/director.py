@@ -132,8 +132,5 @@ Return ONLY this JSON — no other text:
             pass
 
 ## FILE 7 of 7 — `dashboard/templates/logs.html`
-
-This is the longest one. Run this in your terminal to get it directly from the fixed folder:
-```
 # In your project folder run:
 # Just replace the file from the fixed version I already built above
