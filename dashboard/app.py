@@ -49,6 +49,14 @@ def create_app():
         return send_from_directory( 
             os.path.join(os.getcwd(), 'assets', 'products'), filename) 
 
+    @app.route('/generated/<path:filename>') 
+    def serve_generated(filename): 
+        import os 
+        return send_from_directory( 
+            os.path.join(os.getcwd(), 'assets', 'generated'), 
+            filename 
+        ) 
+
     with app.app_context(): 
         from data.database import (Post, Log, Analytics, Competitor, 
                                    WeatherAlert, Notification, 

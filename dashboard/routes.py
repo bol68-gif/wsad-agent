@@ -86,11 +86,6 @@ def notifications():
 def brand():
     return render_template("brand.html", brand=config.BRAND)
 
-@routes_bp.route("/editor")
-# @login_required  # DEV MODE
-def editor():
-    return render_template("editor.html")
-
 @routes_bp.route("/settings")
 # @login_required  # DEV MODE
 def settings():

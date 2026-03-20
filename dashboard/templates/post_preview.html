@@ -1,0 +1,104 @@
+{% extends "base.html" %} 
+ {% block title %}Post Preview{% endblock %} 
+ {% block content %} 
+ <div class="max-w-4xl mx-auto"> 
+     <div class="flex justify-between items-center mb-6"> 
+         <h1 class="text-3xl bebas teal-text">Post #{{ post.id }} Preview</h1> 
+         <a href="{{ url_for('routes.pipeline') }}" 
+            class="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm"> 
+             ← Back to Pipeline 
+         </a> 
+     </div> 
+ 
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-8"> 
+         <!-- Image Preview --> 
+         <div class="card p-4"> 
+             <h3 class="text-xs uppercase text-gray-500 mb-3">Generated Image</h3> 
+             {% if post.image_path and post.image_path != "" %} 
+                 <img src="/generated/{{ post.image_path.split('/')[-1] if '/' in post.image_path else post.image_path.split('\\')[-1] }}" 
+                      class="w-full rounded-lg" 
+                      onerror="this.src='/static/placeholder.jpg'"> 
+             {% else %} 
+                 <div class="w-full aspect-square bg-gray-800 rounded-lg flex items-center justify-center"> 
+                     <div class="text-center"> 
+                         <div class="text-4xl mb-2">🖼️</div> 
+                         <p class="text-gray-500 text-sm">No image yet</p> 
+                         <p class="text-gray-600 text-xs mt-1">Upload product images at Products page</p> 
+                     </div> 
+                 </div> 
+             {% endif %} 
+         </div> 
+ 
+         <!-- Post Details --> 
+         <div class="space-y-4"> 
+             <!-- Director Score --> 
+             <div class="card p-4"> 
+                 <div class="flex justify-between items-center mb-3"> 
+                     <h3 class="text-xs uppercase text-gray-500">Director Score</h3> 
+                     <span class="text-3xl font-black {{ 'teal-text' if post.director_score >= 8.5 else 'text-yellow-400' }}"> 
+                         {{ post.director_score }}/10 
+                     </span> 
+                 </div> 
+                 {% for label, score in [('Hook', post.hook_score), ('Visual', post.visual_score), ('Caption', post.caption_score), ('Strategy', post.strategy_score), ('Brand', post.brand_score), ('Conversion', post.conversion_score)] %} 
+                 <div class="mb-2"> 
+                     <div class="flex justify-between text-xs text-gray-400 mb-1"> 
+                         <span>{{ label }}</span> 
+                         <span>{{ score }}/10</span> 
+                     </div> 
+                     <div class="h-1.5 bg-gray-700 rounded"> 
+                         <div class="h-1.5 rounded {{ 'bg-teal-500' if score >= 8 else 'bg-yellow-500' if score >= 6 else 'bg-red-500' }}" 
+                              style="width:{{ (score or 0) * 10 }}%"></div> 
+                     </div> 
+                 </div> 
+                 {% endfor %} 
+                 {% if post.director_note %} 
+                 <p class="text-xs text-teal-400 mt-3">🎬 {{ post.director_note }}</p> 
+                 {% endif %} 
+             </div> 
+ 
+             <!-- Caption --> 
+             <div class="card p-4"> 
+                 <h3 class="text-xs uppercase text-gray-500 mb-3">Caption</h3> 
+                 <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{{ post.caption }}</p> 
+             </div> 
+ 
+             <!-- Actions --> 
+             <div class="grid grid-cols-2 gap-3"> 
+                 <button onclick="approvePost({{ post.id }})" 
+                         class="py-3 bg-teal-700 hover:bg-teal-600 text-white rounded-xl font-bold"> 
+                     ✅ Approve 
+                 </button> 
+                 <button onclick="skipPost({{ post.id }})" 
+                         class="py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl"> 
+                     ⏭️ Skip 
+                 </button> 
+             </div> 
+ 
+             {% if post.ad_ready %} 
+             <div class="card p-4 border-teal-700"> 
+                 <p class="text-teal-400 font-bold text-sm">🎯 AD READY</p> 
+                 <p class="text-gray-400 text-xs mt-1">{{ post.ad_budget }}</p> 
+             </div> 
+             {% endif %} 
+         </div> 
+     </div> 
+ </div> 
+ 
+ <script> 
+ async function approvePost(id) { 
+     const data = await apiCall(`/api/posts/${id}/approve`, 'POST'); 
+     if (data?.success) { 
+         showAlert(data.message, 'success'); 
+         setTimeout(() => window.location.href = '/pipeline', 1000); 
+     } 
+ } 
+ async function skipPost(id) { 
+     if (!confirm('Skip this post?')) return; 
+     const data = await apiCall(`/api/posts/${id}/skip`, 'POST'); 
+     if (data?.success) { 
+         showAlert(data.message, 'warning'); 
+         setTimeout(() => window.location.href = '/pipeline', 1000); 
+     } 
+ } 
+ </script> 
+ {% endblock %} 
