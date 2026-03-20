@@ -494,6 +494,33 @@ def social_proof(product_path, review_text, rating=5):
 
 # ── ROUTER ───────────────────────────────────────────────
 def apply_template(image_path, template_name, brief):
+    """Main router — handles both local files and remote URLs""" 
+    import tempfile 
+    import requests
+
+    # If image_path is a URL — download it first 
+    if image_path and image_path.startswith("http"): 
+        try: 
+            headers = {"User-Agent": "Mozilla/5.0"} 
+            resp    = requests.get(image_path, timeout=15, headers=headers) 
+            if resp.status_code == 200: 
+                ext  = ".jpg" if "jpg" in image_path else ( 
+                       ".png" if "png" in image_path else ".webp") 
+                os.makedirs(str(config.GENERATED_DIR), exist_ok=True)
+                tmp  = tempfile.NamedTemporaryFile( 
+                    delete=False, suffix=ext, 
+                    dir=str(config.GENERATED_DIR)) 
+                tmp.write(resp.content) 
+                tmp.close() 
+                image_path = tmp.name 
+                print(f"Downloaded URL to temp file: {image_path}") 
+            else: 
+                print(f"URL download failed: {resp.status_code}") 
+                return _create_no_image_fallback(brief, template_name) 
+        except Exception as e: 
+            print(f"URL download error: {e}") 
+            return _create_no_image_fallback(brief, template_name) 
+
     if not image_path or not os.path.exists(image_path):
         return _create_no_image_fallback(brief, template_name)
 

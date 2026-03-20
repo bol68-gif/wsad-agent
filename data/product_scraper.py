@@ -244,7 +244,8 @@ def scrape_products():
  
             # Download images locally 
             local_images = [] 
-            folder_name  = slug.replace("-", "_") 
+            # Use product name as folder — matches designer lookup 
+            folder_name = name.lower().replace(" ", "_").replace("-", "_") 
             products_dir = os.path.join("assets", "products", folder_name) 
             os.makedirs(products_dir, exist_ok=True) 
  

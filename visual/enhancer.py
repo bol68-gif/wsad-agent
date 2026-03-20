@@ -4,24 +4,44 @@ from PIL import Image
 from rembg import remove
 import config
 
-def enhance_product(input_path):
-    """
-    Orchestrates background removal and upscaling.
-    """
-    if not input_path or not os.path.exists(input_path):
-        return input_path
-        
-    try:
-        # Step 1: Remove Background
-        no_bg_path = remove_background(input_path)
-        
-        # Step 2: Upscale
-        final_path = upscale_image(no_bg_path)
-        
-        return final_path
-    except Exception as e:
-        print(f"Enhancement Warning: {str(e)}")
-        return input_path
+def enhance_product(input_path): 
+    """Handles both local files and URLs""" 
+    import tempfile 
+    import requests
+
+    if not input_path: 
+        return input_path 
+ 
+    # Download if URL 
+    if input_path.startswith("http"): 
+        try: 
+            headers = {"User-Agent": "Mozilla/5.0"} 
+            resp    = requests.get(input_path, timeout=15, headers=headers) 
+            if resp.status_code == 200: 
+                ext = ".jpg" if "jpg" in input_path else ( 
+                      ".png" if "png" in input_path else ".webp") 
+                os.makedirs(str(config.GENERATED_DIR), exist_ok=True) 
+                tmp = tempfile.NamedTemporaryFile( 
+                    delete=False, suffix=ext, 
+                    dir=str(config.GENERATED_DIR)) 
+                tmp.write(resp.content) 
+                tmp.close() 
+                input_path = tmp.name 
+            else: 
+                return input_path 
+        except: 
+            return input_path 
+ 
+    if not os.path.exists(input_path): 
+        return input_path 
+ 
+    try: 
+        no_bg = remove_background(input_path) 
+        final = upscale_image(no_bg, scale=2) 
+        return final 
+    except Exception as e: 
+        print(f"Enhancement error: {e}") 
+        return input_path 
 
 def remove_background(input_path):
     """

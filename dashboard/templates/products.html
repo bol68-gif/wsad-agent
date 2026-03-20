@@ -2,224 +2,578 @@
 {% block title %}Products{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
-    <div class="flex justify-between items-center">
-        <h2 class="text-3xl bebas teal-text tracking-widest">Product Catalog</h2>
-        <div class="flex gap-4">
-            <button id="scrapeBtn" onclick="fetchFromWebsite()" class="bg-[#1A1A1A] border border-[#333] hover:border-teal-600 px-6 py-2 rounded text-white text-xs uppercase bebas tracking-widest transition flex items-center gap-2">
-                🌐 Fetch from Website
-            </button>
-            <button onclick="openAddModal()" class="bg-[#008080] hover:bg-[#005F5F] px-6 py-2 rounded text-white text-xs uppercase bebas tracking-widest transition">
-                Add Product
-            </button>
+<div style="max-width:1400px;margin:0 auto;padding:24px">
+
+  <!-- HEADER -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px">
+    <div>
+      <h1 style="font-size:28px;font-weight:900;color:#fff;margin:0">Product Catalog</h1>
+      <p style="color:#555;font-size:12px;margin:4px 0 0">
+        <span id="totalCount" style="color:#008080;font-weight:700">0</span> products ·
+        <span id="highPriorityCount" style="color:#f59e0b;font-weight:700">0</span> high priority
+      </p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="fetchFromWebsite()" id="scrapeBtn"
+              style="padding:10px 18px;background:#111;border:1px solid #333;border-radius:8px;
+                     color:#fff;font-size:12px;font-weight:700;cursor:pointer;
+                     display:flex;align-items:center;gap:6px;transition:border-color 0.2s"
+              onmouseover="this.style.borderColor='#008080'"
+              onmouseout="this.style.borderColor='#333'">
+        🌐 Fetch from Website
+      </button>
+      <button onclick="openAddModal()"
+              style="padding:10px 18px;background:linear-gradient(135deg,#008080,#005f5f);
+                     border:none;border-radius:8px;color:#fff;font-size:12px;
+                     font-weight:700;cursor:pointer">
+        + Add Product
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px" id="filterBar">
+    {% for cat in ['All', 'Men', 'Women', 'Kids', 'Biker', 'Unisex', 'Safety'] %}
+    <button onclick="filterProducts('{{ cat }}')" data-filter="{{ cat }}"
+            class="filter-btn"
+            style="padding:6px 14px;border-radius:20px;font-size:10px;font-weight:700;
+                   text-transform:uppercase;cursor:pointer;transition:all 0.2s;
+                   {% if cat == 'All' %}background:#008080;border:1px solid #008080;color:#fff
+                   {% else %}background:transparent;border:1px solid #333;color:#666{% endif %}">
+      {{ cat }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <!-- PRODUCT GRID -->
+  <div id="productGrid"
+       style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px">
+    {% for product in products %}
+    <div class="product-card"
+         data-category="{{ product.category }}"
+         data-id="{{ product.id }}"
+         style="background:#111;border:1px solid #1e1e1e;border-radius:14px;
+                overflow:hidden;transition:border-color 0.2s;position:relative"
+         onmouseover="this.style.borderColor='#333'"
+         onmouseout="this.style.borderColor='#1e1e1e'">
+
+      <!-- Priority Badge -->
+      {% if product.priority and product.priority.lower() == 'high' %}
+      <div style="position:absolute;top:10px;right:10px;z-index:10;
+                  background:#f59e0b;color:#000;font-size:8px;font-weight:900;
+                  padding:3px 8px;border-radius:12px;text-transform:uppercase">
+        ★ HIGH
+      </div>
+      {% endif %}
+
+      <!-- Image Gallery -->
+      <div style="position:relative;aspect-ratio:4/3;background:#0a0a0a;overflow:hidden">
+        <!-- Main Image -->
+        <img id="mainImg_{{ product.id }}"
+             src="{% if product.primary_image %}{% if product.primary_image.startswith('http') %}{{ product.primary_image }}{% else %}/static/products/{{ product.primary_image.replace('\\', '/').split('assets/products/')[-1] }}{% endif %}{% else %}{% endif %}"
+             style="width:100%;height:100%;object-fit:cover;transition:opacity 0.3s"
+             onerror="this.style.display='none';document.getElementById('noImg_{{ product.id }}').style.display='flex'"
+             {% if not product.primary_image %}style="display:none"{% endif %}>
+
+        <!-- No Image Placeholder -->
+        <div id="noImg_{{ product.id }}"
+             style="display:{% if product.primary_image %}none{% else %}flex{% endif %};
+                    align-items:center;justify-content:center;height:100%;
+                    flex-direction:column;gap:8px;color:#333">
+          <div style="font-size:32px">📷</div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase">No Image</div>
         </div>
-    </div>
 
-    <!-- Filter Bar -->
-    <div class="flex flex-wrap gap-2">
-        {% for cat in ['all', 'Men', 'Women', 'Kids', 'Biker', 'Unisex', 'Safety'] %}
-        <button onclick="filterProducts('{{ cat }}')" 
-                data-filter="{{ cat }}"
-                class="filter-btn px-4 py-1 rounded-full text-[10px] uppercase font-bold border {% if cat == 'all' %}bg-teal-600 border-teal-600 text-white{% else %}border-[#333] text-gray-500 hover:text-white hover:border-[#555] bg-gray-700{% endif %} transition">
-            {{ cat | capitalize }}
-        </button>
-        {% endfor %}
-    </div>
-
-    <!-- Product Grid -->
-    <div id="productGrid" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
-        {% for product in products %}
-        <div class="product-card card overflow-hidden" data-category="{{ product.category }}">
-            <div class="aspect-[4/5] bg-[#0A0A0A] relative">
-                <img id="productImg_{{ product.id }}" 
-                     src="{% if product.primary_image %}
-                            {% if product.primary_image.startswith('http') %}
-                                {{ product.primary_image }}
-                            {% else %}
-                                /static/products/{{ product.primary_image.replace('\\', '/').split('assets/products/')[-1] }}
-                            {% endif %}
-                         {% else %}
-                            data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDQwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI1MDAiIGZpbGw9IiMxQTFBMUEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzMzMyIgZm9udC1mYW1pbHk9IkJlYmFzIE5ldWUsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDAiPk5PIElNQUdFPC90ZXh0Pjwvc3ZnPg==
-                         {% endif %}" 
-                     class="w-full h-full object-cover" 
-                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDQwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI1MDAiIGZpbGw9IiMxQTFBMUEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI0ZGMDAwMCIgZm9udC1mYW1pbHk9IkJlYmFzIE5ldWUsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDAiPklNQUdFIEVSUk9SPC90ZXh0Pjwvc3ZnPg=='">
-                <div class="absolute top-3 left-3 bg-[#111]/80 backdrop-blur-md text-[9px] font-bold px-2 py-1 rounded uppercase tracking-tighter border border-[#333]">{{ product.category }}</div>
-                {% if product.priority == 'high' %}
-                <div class="absolute top-3 right-3 bg-red-600 text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase">Priority</div>
-                {% endif %}
-            </div>
-            <div class="p-4 space-y-3">
-                <div class="flex justify-between items-start">
-                    <h4 class="text-xs font-bold uppercase truncate pr-2">{{ product.name }}</h4>
-                    <span class="text-xs teal-text font-bold shrink-0">₹{{ product.price }}</span>
-                </div>
-                
-                <div class="flex justify-between items-center text-[9px] text-gray-500 uppercase">
-                    <span>Stock: <span class="{% if product.stock > 0 %}text-green-500{% else %}text-red-500{% endif %} font-bold">{{ product.stock }}</span></span>
-                    <span>Posts: <span class="text-white">{{ product.post_count }}</span></span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 pt-2">
-                    <button onclick="uploadProductImage({{ product.id }})" class="bg-[#1A1A1A] border border-[#333] hover:border-teal-600 text-[8px] uppercase font-bold py-2 rounded transition">Upload Image</button>
-                    <button class="bg-[#1A1A1A] border border-[#333] hover:border-blue-600 text-[8px] uppercase font-bold py-2 rounded transition">Analytics</button>
-                    <button class="bg-[#1A1A1A] border border-[#333] hover:border-gray-500 text-[8px] uppercase font-bold py-2 rounded transition col-span-2">Edit Details</button>
-                </div>
-            </div>
+        <!-- Image Gallery Thumbnails (if multiple images) -->
+        {% if product.all_images %}
+        <div id="thumbs_{{ product.id }}"
+             style="position:absolute;bottom:8px;left:0;right:0;
+                    display:flex;justify-content:center;gap:4px;padding:0 8px">
+          {% set imgs = product.all_images.split(',') %}
+          {% for img in imgs[:5] %}
+          <div onclick="switchImage({{ product.id }}, '{{ img.strip() }}')"
+               style="width:8px;height:8px;border-radius:50%;cursor:pointer;
+                      background:{% if loop.first %}#008080{% else %}rgba(255,255,255,0.4){% endif %};
+                      transition:background 0.2s;flex-shrink:0"
+               class="thumb-dot" data-product="{{ product.id }}" data-idx="{{ loop.index0 }}">
+          </div>
+          {% endfor %}
         </div>
-        {% endfor %}
+        {% endif %}
+
+        <!-- Category Label -->
+        <div style="position:absolute;top:10px;left:10px;
+                    background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+                    color:#fff;font-size:9px;font-weight:700;
+                    padding:3px 8px;border-radius:4px;text-transform:uppercase;
+                    border:1px solid rgba(255,255,255,0.1)">
+          {{ product.category }}
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <h4 style="font-size:13px;font-weight:800;color:#fff;margin:0;
+                     text-transform:uppercase;letter-spacing:0.5px;
+                     flex:1;padding-right:8px;line-height:1.3">
+            {{ product.name }}
+          </h4>
+          <span style="color:#008080;font-size:14px;font-weight:900;white-space:nowrap">
+            ₹{{ product.price }}
+          </span>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;font-size:10px;
+                    color:#555;text-transform:uppercase;margin-bottom:12px">
+          <span>Stock: <span style="color:{% if product.stock > 0 %}#22c55e{% else %}#ef4444{% endif %};font-weight:700">{{ product.stock or 0 }}</span></span>
+          <span>Posts: <span style="color:#fff;font-weight:700">{{ product.post_count or 0 }}</span></span>
+          <span>Priority: <span style="color:{% if product.priority and product.priority.lower() == 'high' %}#f59e0b{% elif product.priority and product.priority.lower() == 'medium' %}#60a5fa{% else %}#555{% endif %};font-weight:700">{{ product.priority or 'Low' }}</span></span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button onclick="uploadProductImage({{ product.id }})"
+                  style="padding:7px 4px;background:#0d2020;border:1px solid #1a3333;
+                         border-radius:6px;color:#008080;font-size:9px;font-weight:700;
+                         text-transform:uppercase;cursor:pointer;transition:all 0.2s"
+                  onmouseover="this.style.background='#1a3333'"
+                  onmouseout="this.style.background='#0d2020'">
+            📸 Upload Image
+          </button>
+          <button onclick="openGallery({{ product.id }}, '{{ product.name }}')"
+                  style="padding:7px 4px;background:#0d1a2d;border:1px solid #1a2a3d;
+                         border-radius:6px;color:#60a5fa;font-size:9px;font-weight:700;
+                         text-transform:uppercase;cursor:pointer;transition:all 0.2s"
+                  onmouseover="this.style.background='#1a2a3d'"
+                  onmouseout="this.style.background='#0d1a2d'">
+            🖼️ Gallery
+          </button>
+          <button onclick="openPriorityModal({{ product.id }}, '{{ product.name }}', '{{ product.priority or 'medium' }}')"
+                  style="padding:7px 4px;background:#1a1400;border:1px solid #2a2200;
+                         border-radius:6px;color:#f59e0b;font-size:9px;font-weight:700;
+                         text-transform:uppercase;cursor:pointer;transition:all 0.2s"
+                  onmouseover="this.style.background='#2a2200'"
+                  onmouseout="this.style.background='#1a1400'">
+            ★ Priority
+          </button>
+          <button onclick="deleteProduct({{ product.id }}, '{{ product.name }}')"
+                  style="padding:7px 4px;background:#1a0000;border:1px solid #2a0000;
+                         border-radius:6px;color:#ef4444;font-size:9px;font-weight:700;
+                         text-transform:uppercase;cursor:pointer;transition:all 0.2s"
+                  onmouseover="this.style.background='#2a0000'"
+                  onmouseout="this.style.background='#1a0000'">
+            🗑️ Delete
+          </button>
+        </div>
+      </div>
     </div>
+    {% endfor %}
+
+    {% if not products %}
+    <div style="grid-column:1/-1;text-align:center;padding:60px;color:#444">
+      <div style="font-size:48px;margin-bottom:12px">📦</div>
+      <p style="font-size:14px;font-weight:700;color:#555">No products yet</p>
+      <p style="font-size:12px;color:#333;margin-top:4px">Click "Fetch from Website" to import from relaxfashionwear.in</p>
+    </div>
+    {% endif %}
+  </div>
 </div>
 
-<!-- Add Product Modal -->
-<div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-    <div class="card w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div class="p-6 border-b border-[#333] flex justify-between items-center">
-            <h3 class="bebas text-2xl teal-text">Add New Product</h3>
-            <button onclick="closeAddModal()" class="text-gray-500 hover:text-white text-2xl">&times;</button>
-        </div>
-        <form id="addForm" onsubmit="saveManualProduct(event)" class="p-6 space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-gray-500">Product Name</label>
-                    <input type="text" id="name" required class="w-full bg-[#0A0A0A] border border-[#333] p-2 rounded text-sm focus:border-teal-600 outline-none">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-gray-500">Category</label>
-                    <select id="category" class="w-full bg-[#0A0A0A] border border-[#333] p-2 rounded text-sm focus:border-teal-600 outline-none">
-                        <option value="Men">Men</option>
-                        <option value="Women">Women</option>
-                        <option value="Kids">Kids</option>
-                        <option value="Biker">Biker</option>
-                        <option value="Unisex">Unisex</option>
-                        <option value="Safety">Safety</option>
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-gray-500">Price (₹)</label>
-                    <input type="number" id="price" class="w-full bg-[#0A0A0A] border border-[#333] p-2 rounded text-sm focus:border-teal-600 outline-none">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-gray-500">Stock</label>
-                    <input type="number" id="stock" class="w-full bg-[#0A0A0A] border border-[#333] p-2 rounded text-sm focus:border-teal-600 outline-none">
-                </div>
-            </div>
-            <div class="space-y-1">
-                <label class="text-[10px] uppercase text-gray-500">Description</label>
-                <textarea id="description" class="w-full bg-[#0A0A0A] border border-[#333] p-2 rounded text-sm h-20 focus:border-teal-600 outline-none resize-none"></textarea>
-            </div>
-            <div class="space-y-1">
-                <label class="text-[10px] uppercase text-gray-500">Target Persona</label>
-                <input type="text" id="target_persona" placeholder="e.g. Daily office commuter in Mumbai" class="w-full bg-[#0A0A0A] border border-[#333] p-2 rounded text-sm focus:border-teal-600 outline-none">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-gray-500">Website URL</label>
-                    <input type="url" id="website_url" class="w-full bg-[#0A0A0A] border border-[#333] p-2 rounded text-sm focus:border-teal-600 outline-none">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-gray-500">Priority</label>
-                    <select id="priority" class="w-full bg-[#0A0A0A] border border-[#333] p-2 rounded text-sm focus:border-teal-600 outline-none">
-                        <option value="low">Low</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="high">High</option>
-                    </select>
-                </div>
-            </div>
-            <div class="pt-4 flex gap-3">
-                <button type="submit" class="flex-1 bg-teal-600 hover:bg-teal-700 py-3 rounded text-xs uppercase font-bold tracking-widest transition">Save Product</button>
-                <button type="button" onclick="closeAddModal()" class="flex-1 bg-gray-800 hover:bg-gray-700 py-3 rounded text-xs uppercase font-bold tracking-widest transition">Cancel</button>
-            </div>
-        </form>
+<!-- ── ADD PRODUCT MODAL ─────────────────────────────── -->
+<div id="addModal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
+            z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#111;border:1px solid #222;border-radius:16px;
+              width:100%;max-width:580px;max-height:90vh;overflow-y:auto">
+    <div style="padding:20px 24px;border-bottom:1px solid #1e1e1e;
+                display:flex;justify-content:space-between;align-items:center">
+      <h3 style="font-size:18px;font-weight:900;color:#008080;margin:0">Add New Product</h3>
+      <button onclick="closeAddModal()"
+              style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1">×</button>
     </div>
+    <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <label style="display:block;font-size:10px;color:#555;text-transform:uppercase;margin-bottom:5px">Product Name *</label>
+          <input id="newName" type="text" required
+                 style="width:100%;background:#0a0a0a;border:1px solid #222;border-radius:6px;
+                        padding:9px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none"
+                 onfocus="this.style.borderColor='#008080'" onblur="this.style.borderColor='#222'">
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;color:#555;text-transform:uppercase;margin-bottom:5px">Category</label>
+          <select id="newCategory"
+                  style="width:100%;background:#0a0a0a;border:1px solid #222;border-radius:6px;
+                         padding:9px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none">
+            <option value="Men">Men</option>
+            <option value="Women">Women</option>
+            <option value="Kids">Kids</option>
+            <option value="Biker">Biker</option>
+            <option value="Unisex">Unisex</option>
+            <option value="Safety">Safety</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;color:#555;text-transform:uppercase;margin-bottom:5px">Price (₹)</label>
+          <input id="newPrice" type="number"
+                 style="width:100%;background:#0a0a0a;border:1px solid #222;border-radius:6px;
+                        padding:9px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none"
+                 onfocus="this.style.borderColor='#008080'" onblur="this.style.borderColor='#222'">
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;color:#555;text-transform:uppercase;margin-bottom:5px">Priority</label>
+          <select id="newPriority"
+                  style="width:100%;background:#0a0a0a;border:1px solid #222;border-radius:6px;
+                         padding:9px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;color:#555;text-transform:uppercase;margin-bottom:5px">Description</label>
+        <textarea id="newDescription" rows="3"
+                  style="width:100%;background:#0a0a0a;border:1px solid #222;border-radius:6px;
+                         padding:9px 12px;color:#fff;font-size:13px;box-sizing:border-box;
+                         outline:none;resize:vertical"
+                  onfocus="this.style.borderColor='#008080'" onblur="this.style.borderColor='#222'"></textarea>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;color:#555;text-transform:uppercase;margin-bottom:5px">Target Persona</label>
+        <input id="newPersona" type="text" placeholder="e.g. Mumbai delivery partner, 28 years"
+               style="width:100%;background:#0a0a0a;border:1px solid #222;border-radius:6px;
+                      padding:9px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none"
+               onfocus="this.style.borderColor='#008080'" onblur="this.style.borderColor='#222'">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button onclick="saveNewProduct()"
+                style="flex:1;padding:12px;background:linear-gradient(135deg,#008080,#005f5f);
+                       border:none;border-radius:8px;color:#fff;font-size:12px;
+                       font-weight:700;text-transform:uppercase;cursor:pointer">
+          Save Product
+        </button>
+        <button onclick="closeAddModal()"
+                style="flex:1;padding:12px;background:#1a1a1a;border:1px solid #333;
+                       border-radius:8px;color:#888;font-size:12px;
+                       font-weight:700;text-transform:uppercase;cursor:pointer">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── GALLERY MODAL ──────────────────────────────────── -->
+<div id="galleryModal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);
+            z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#111;border:1px solid #222;border-radius:16px;
+              width:100%;max-width:700px;max-height:90vh;overflow-y:auto">
+    <div style="padding:16px 20px;border-bottom:1px solid #1e1e1e;
+                display:flex;justify-content:space-between;align-items:center">
+      <h3 id="galleryTitle" style="font-size:16px;font-weight:900;color:#fff;margin:0"></h3>
+      <button onclick="closeGallery()"
+              style="background:none;border:none;color:#555;font-size:22px;cursor:pointer">×</button>
+    </div>
+    <div style="padding:20px">
+      <!-- Large preview -->
+      <div style="background:#0a0a0a;border-radius:10px;overflow:hidden;
+                  aspect-ratio:4/3;margin-bottom:16px;display:flex;
+                  align-items:center;justify-content:center">
+        <img id="galleryMainImg" src=""
+             style="max-width:100%;max-height:100%;object-fit:contain">
+      </div>
+      <!-- Thumbnails grid -->
+      <div id="galleryThumbs"
+           style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px">
+      </div>
+      <!-- Upload more -->
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #1e1e1e">
+        <button onclick="uploadProductImage(currentGalleryProductId)"
+                style="width:100%;padding:10px;background:#0d2020;border:1px solid #1a3333;
+                       border-radius:8px;color:#008080;font-size:11px;font-weight:700;
+                       text-transform:uppercase;cursor:pointer">
+          📸 Upload New Image
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PRIORITY MODAL ─────────────────────────────────── -->
+<div id="priorityModal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
+            z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#111;border:1px solid #222;border-radius:14px;
+              width:360px;padding:24px">
+    <h3 id="priorityTitle" style="font-size:16px;font-weight:900;color:#fff;margin:0 0 20px"></h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      {% for level, color, desc in [('high','#f59e0b','Featured first in all agent posts'), ('medium','#60a5fa','Normal rotation with other products'), ('low','#555','Rarely selected by agents')] %}
+      <label style="display:flex;align-items:center;gap:12px;padding:12px;
+                    background:#0a0a0a;border:1px solid #222;border-radius:8px;cursor:pointer"
+             onclick="selectPriority('{{ level }}')">
+        <input type="radio" name="priorityLevel" value="{{ level }}"
+               style="accent-color:{{ color }}">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:{{ color }};text-transform:uppercase">{{ level }}</div>
+          <div style="font-size:10px;color:#555;margin-top:2px">{{ desc }}</div>
+        </div>
+      </label>
+      {% endfor %}
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="savePriority()"
+              style="flex:1;padding:10px;background:#f59e0b;border:none;
+                     border-radius:8px;color:#000;font-size:11px;font-weight:800;
+                     text-transform:uppercase;cursor:pointer">
+        Save Priority
+      </button>
+      <button onclick="closePriorityModal()"
+              style="flex:1;padding:10px;background:#1a1a1a;border:1px solid #333;
+                     border-radius:8px;color:#888;font-size:11px;font-weight:700;
+                     text-transform:uppercase;cursor:pointer">
+        Cancel
+      </button>
+    </div>
+  </div>
 </div>
 
 <script>
-async function fetchFromWebsite() { 
-    const btn = document.getElementById('scrapeBtn'); 
-    btn.textContent = '⏳ Fetching from website...'; 
-    btn.disabled = true; 
-    const data = await apiCall('/api/products/scrape', 'POST'); 
-    if (data && data.success) { 
-        showAlert(data.message, 'success'); 
-        setTimeout(() => location.reload(), 1500); 
-    } else { 
-        showAlert(data?.message || 'Scrape failed', 'error'); 
-    } 
-    btn.textContent = '🌐 Fetch from Website'; 
-    btn.disabled = false; 
-} 
+var currentFilter       = 'All';
+var currentPriorityId   = null;
+var currentPriority     = 'medium';
+var currentGalleryProductId = null;
 
-async function uploadProductImage(productId) { 
-    const input = document.createElement('input'); 
-    input.type = 'file'; 
-    input.accept = 'image/jpeg,image/png,image/webp'; 
-    input.onchange = async function() { 
-        const file = input.files[0]; 
-        if (!file) return; 
-        const formData = new FormData(); 
-        formData.append('image', file); 
-        try { 
-            const res = await fetch(`/api/products/${productId}/upload_image`, { 
-                method: 'POST', 
-                body: formData 
-            }); 
-            const data = await res.json(); 
-            if (data.success) { 
-                showAlert('Image uploaded successfully', 'success'); 
-                const img = document.getElementById(`productImg_${productId}`);
-                if (img) img.src = data.image_url + '?t=' + new Date().getTime(); 
-            } else { 
-                showAlert(data.message, 'error'); 
-            } 
-        } catch(e) { 
-            showAlert('Upload failed', 'error'); 
-        } 
-    }; 
-    input.click(); 
-} 
+// ── COUNTS ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  var cards = document.querySelectorAll('.product-card');
+  document.getElementById('totalCount').textContent = cards.length;
+  var high = 0;
+  cards.forEach(function(c) {
+    var badge = c.querySelector('[style*="f59e0b"]');
+    if (badge) high++;
+  });
+  document.getElementById('highPriorityCount').textContent = high;
+});
 
-function filterProducts(category) { 
-    const cards = document.querySelectorAll('.product-card'); 
-    cards.forEach(card => { 
-        if (category === 'all' || card.dataset.category === category) { 
-            card.style.display = 'block'; 
-        } else { 
-            card.style.display = 'none'; 
-        } 
-    }); 
-    document.querySelectorAll('.filter-btn').forEach(btn => { 
-        btn.classList.toggle('bg-teal-600', btn.dataset.filter === category); 
-        btn.classList.toggle('bg-gray-700', btn.dataset.filter !== category); 
-    }); 
+// ── IMAGE GALLERY ────────────────────────────────────
+function switchImage(productId, imgSrc) {
+  var mainImg = document.getElementById('mainImg_' + productId);
+  var noImg   = document.getElementById('noImg_' + productId);
+  if (!imgSrc || imgSrc === 'None' || imgSrc === '') return;
+
+  var src = imgSrc.trim();
+  if (!src.startsWith('http')) {
+    src = '/static/products/' + src.replace(/\\/g, '/').split('assets/products/').pop();
+  }
+  if (mainImg) {
+    mainImg.style.display = 'block';
+    mainImg.src = src;
+    if (noImg) noImg.style.display = 'none';
+  }
 }
 
+// ── FILTER ───────────────────────────────────────────
+function filterProducts(cat) {
+  currentFilter = cat;
+  document.querySelectorAll('.product-card').forEach(function(card) {
+    var show = cat === 'All' || card.dataset.category === cat;
+    card.style.display = show ? 'block' : 'none';
+  });
+  document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    var active = btn.dataset.filter === cat;
+    btn.style.background    = active ? '#008080' : 'transparent';
+    btn.style.borderColor   = active ? '#008080' : '#333';
+    btn.style.color         = active ? '#fff'    : '#666';
+  });
+}
+
+// ── SCRAPE ───────────────────────────────────────────
+async function fetchFromWebsite() {
+  var btn = document.getElementById('scrapeBtn');
+  btn.textContent = '⏳ Fetching...';
+  btn.disabled = true;
+  var data = await apiCall('/api/products/scrape', 'POST');
+  if (data && data.success) {
+    showAlert(data.message, 'success');
+    setTimeout(function() { location.reload(); }, 2000);
+  } else {
+    showAlert((data && data.message) || 'Scrape failed — check logs', 'error');
+  }
+  btn.textContent = '🌐 Fetch from Website';
+  btn.disabled = false;
+}
+
+// ── UPLOAD IMAGE ─────────────────────────────────────
+async function uploadProductImage(productId) {
+  var input = document.createElement('input');
+  input.type   = 'file';
+  input.accept = 'image/jpeg,image/png,image/webp';
+  input.onchange = async function() {
+    var file = input.files[0];
+    if (!file) return;
+    showAlert('Uploading image...', 'info');
+    var formData = new FormData();
+    formData.append('image', file);
+    try {
+      var resp = await fetch('/api/products/' + productId + '/upload_image', {
+        method: 'POST', body: formData
+      });
+      var data = await resp.json();
+      if (data.success) {
+        showAlert('Image uploaded!', 'success');
+        // Update displayed image
+        var mainImg = document.getElementById('mainImg_' + productId);
+        var noImg   = document.getElementById('noImg_' + productId);
+        if (mainImg) {
+          mainImg.src = data.image_url + '?t=' + Date.now();
+          mainImg.style.display = 'block';
+          if (noImg) noImg.style.display = 'none';
+        }
+      } else {
+        showAlert(data.message || 'Upload failed', 'error');
+      }
+    } catch(e) {
+      showAlert('Upload error: ' + e.message, 'error');
+    }
+  };
+  input.click();
+}
+
+// ── GALLERY ──────────────────────────────────────────
+function openGallery(productId, productName) {
+  currentGalleryProductId = productId;
+  document.getElementById('galleryTitle').textContent = productName + ' — Image Gallery';
+  document.getElementById('galleryModal').style.display = 'flex';
+
+  // Load images from the card's all_images data
+  var card    = document.querySelector('.product-card[data-id="' + productId + '"]');
+  var mainImg = document.getElementById('mainImg_' + productId);
+  var thumbsContainer = document.getElementById('galleryThumbs');
+
+  // Set main preview to current image
+  if (mainImg && mainImg.src) {
+    document.getElementById('galleryMainImg').src = mainImg.src;
+  }
+
+  // Load all images via API
+  fetch('/api/products/' + productId + '/images')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.images && data.images.length) {
+        thumbsContainer.innerHTML = data.images.map(function(img, i) {
+          return '<div onclick="setGalleryMain(\'' + img + '\')" ' +
+            'style="aspect-ratio:1;background:#0a0a0a;border-radius:8px;overflow:hidden;cursor:pointer;' +
+            'border:2px solid ' + (i === 0 ? '#008080' : '#222') + ';transition:border-color 0.2s">' +
+            '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover" ' +
+            'onerror="this.parentElement.style.display=\'none\'">' +
+            '</div>';
+        }).join('');
+      } else {
+        thumbsContainer.innerHTML = '<p style="color:#444;font-size:12px;grid-column:1/-1">No additional images. Upload some!</p>';
+      }
+    })
+    .catch(function() {
+      thumbsContainer.innerHTML = '<p style="color:#444;font-size:12px">Could not load images</p>';
+    });
+}
+
+function setGalleryMain(src) {
+  document.getElementById('galleryMainImg').src = src;
+}
+
+function closeGallery() {
+  document.getElementById('galleryModal').style.display = 'none';
+  currentGalleryProductId = null;
+}
+
+// ── PRIORITY ─────────────────────────────────────────
+function openPriorityModal(productId, productName, currentPriorityVal) {
+  currentPriorityId = productId;
+  currentPriority   = currentPriorityVal.toLowerCase();
+  document.getElementById('priorityTitle').textContent = 'Set Priority — ' + productName;
+
+  var radios = document.querySelectorAll('input[name="priorityLevel"]');
+  radios.forEach(function(r) {
+    r.checked = r.value === currentPriority;
+  });
+
+  document.getElementById('priorityModal').style.display = 'flex';
+}
+
+function selectPriority(level) {
+  currentPriority = level;
+  var radios = document.querySelectorAll('input[name="priorityLevel"]');
+  radios.forEach(function(r) { r.checked = r.value === level; });
+}
+
+async function savePriority() {
+  if (!currentPriorityId) return;
+  var data = await apiCall('/api/products/' + currentPriorityId + '/priority', 'POST', {
+    priority: currentPriority
+  });
+  if (data && data.success) {
+    showAlert('Priority updated to ' + currentPriority.toUpperCase(), 'success');
+    closePriorityModal();
+    setTimeout(function() { location.reload(); }, 800);
+  } else {
+    showAlert('Failed to update priority', 'error');
+  }
+}
+
+function closePriorityModal() {
+  document.getElementById('priorityModal').style.display = 'none';
+  currentPriorityId = null;
+}
+
+// ── DELETE ───────────────────────────────────────────
+async function deleteProduct(productId, productName) {
+  if (!confirm('Delete "' + productName + '"? This cannot be undone.')) return;
+  var data = await apiCall('/api/products/' + productId + '/delete', 'DELETE');
+  if (data && data.success) {
+    showAlert(productName + ' deleted', 'warning');
+    var card = document.querySelector('.product-card[data-id="' + productId + '"]');
+    if (card) {
+      card.style.transition = 'opacity 0.3s, transform 0.3s';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.9)';
+      setTimeout(function() { card.remove(); }, 300);
+    }
+  } else {
+    showAlert('Delete failed', 'error');
+  }
+}
+
+// ── ADD PRODUCT ──────────────────────────────────────
 function openAddModal() {
-    document.getElementById('addModal').style.display = 'flex';
+  document.getElementById('addModal').style.display = 'flex';
 }
 
 function closeAddModal() {
-    document.getElementById('addModal').style.display = 'none';
+  document.getElementById('addModal').style.display = 'none';
 }
 
-async function saveManualProduct(event) {
-    event.preventDefault();
-    const settings = {
-        name: document.getElementById('name').value,
-        category: document.getElementById('category').value,
-        price: document.getElementById('price').value,
-        stock: document.getElementById('stock').value,
-        description: document.getElementById('description').value,
-        target_persona: document.getElementById('target_persona').value,
-        website_url: document.getElementById('website_url').value,
-        priority: document.getElementById('priority').value,
-    };
-    const data = await apiCall('/api/products/add', 'POST', settings);
-    if (data && data.success) {
-        showAlert(data.message, 'success');
-        setTimeout(() => location.reload(), 1000);
-    } else if (data) {
-        showAlert(data.message, 'error');
-    }
+async function saveNewProduct() {
+  var name = document.getElementById('newName').value.trim();
+  if (!name) { showAlert('Product name required', 'error'); return; }
+
+  var data = await apiCall('/api/products/add', 'POST', {
+    name:         name,
+    category:     document.getElementById('newCategory').value,
+    price:        parseInt(document.getElementById('newPrice').value) || 0,
+    description:  document.getElementById('newDescription').value,
+    target_persona: document.getElementById('newPersona').value,
+    priority:     document.getElementById('newPriority').value,
+  });
+  if (data && data.success) {
+    showAlert('Product added!', 'success');
+    closeAddModal();
+    setTimeout(function() { location.reload(); }, 800);
+  } else {
+    showAlert((data && data.message) || 'Failed to add product', 'error');
+  }
 }
 </script>
 {% endblock %}

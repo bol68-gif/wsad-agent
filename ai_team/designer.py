@@ -134,55 +134,106 @@ Your visuals stop the scroll in 0.3 seconds.
                 self._save_image_to_post(post_id, fallback)
             return assets
 
-    def get_product_image(self, product_name):
-        """Find product image in assets/products/ folder."""
-        try:
-            products_dir = os.path.join("assets", "products")
-            if not os.path.exists(products_dir):
-                self.log_and_broadcast(
-                    "⚠️ [Designer] assets/products/ folder missing — create it and upload images at /products page",
-                    "WARNING"
-                )
-                return None
-
-            name_clean = product_name.lower().replace(" ", "").replace("-", "")
-
-            for item in os.listdir(products_dir):
-                item_clean = item.lower().replace(" ", "").replace("-", "")
-                item_path  = os.path.join(products_dir, item)
-
-                if os.path.isdir(item_path):
-                    if name_clean in item_clean or item_clean in name_clean:
-                        images = [f for f in os.listdir(item_path)
-                                  if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]
-                        if images:
-                            return os.path.join(item_path, images[0])
-                elif os.path.isfile(item_path):
-                    if name_clean in item_clean and any(
-                        item_path.lower().endswith(ext)
-                        for ext in ['.jpg', '.jpeg', '.png', '.webp']
-                    ):
-                        return item_path
-
-            # Fallback — any available image
-            self.log_and_broadcast(
-                f"⚠️ [Designer] No exact match for '{product_name}' — using any available product image",
-                "WARNING"
-            )
-            for item in os.listdir(products_dir):
-                item_path = os.path.join(products_dir, item)
-                if os.path.isdir(item_path):
-                    images = [f for f in os.listdir(item_path)
-                              if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]
-                    if images:
-                        return os.path.join(item_path, images[0])
-                elif item.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                    return item_path
-
-            return None
-        except Exception as e:
-            self.log_and_broadcast(f"❌ [Designer] Image search error: {str(e)[:100]}", "ERROR")
-            return None
+    def get_product_image(self, product_name): 
+        """Find product image — checks DB first, then folder fuzzy match""" 
+        import os 
+    
+        # METHOD 1 — Check database for stored image path 
+        try: 
+            from dashboard.app import get_app 
+            app = get_app() 
+            with app.app_context(): 
+                from data.database import Product 
+                products = Product.query.filter_by(active=True).all() 
+                for p in products: 
+                    if p.name.lower().strip() == product_name.lower().strip(): 
+                        # Found exact match in DB 
+                        if p.primary_image: 
+                            img = p.primary_image.strip() 
+                            # Direct URL (Cloudinary etc) 
+                            if img.startswith("http"): 
+                                self.log_and_broadcast( 
+                                    f"Using DB image URL for {product_name}", "IMAGE FOUND") 
+                                return img 
+                            # Local path 
+                            if os.path.exists(img): 
+                                self.log_and_broadcast( 
+                                    f"Using DB local image for {product_name}", "IMAGE FOUND") 
+                                return img 
+                        # Check all_images 
+                        if p.all_images: 
+                            for img in p.all_images.split(","): 
+                                img = img.strip() 
+                                if img and img != 'None': 
+                                    if img.startswith("http"): 
+                                        return img 
+                                    if os.path.exists(img): 
+                                        return img 
+        except Exception as e: 
+            self.log_and_broadcast(f"DB image lookup failed: {str(e)[:60]}", "WARNING") 
+    
+        # METHOD 2 — Fuzzy folder search in assets/products/ 
+        try: 
+            products_dir = os.path.join("assets", "products") 
+            if not os.path.exists(products_dir): 
+                return None 
+    
+            # Build search keywords from product name 
+            # Remove common words that don't help matching 
+            name_words = [w.lower() for w in product_name.split() 
+                          if w.lower() not in ['set', 'rain', 'the', 'a', 'and']] 
+    
+            best_match = None 
+            best_score = 0 
+    
+            for item in os.listdir(products_dir): 
+                item_path = os.path.join(products_dir, item) 
+                item_lower = item.lower().replace("_", " ").replace("-", " ") 
+    
+                # Score: how many keywords match 
+                score = sum(1 for w in name_words if w in item_lower) 
+    
+                if score > best_score: 
+                    # Check this folder/file has an image 
+                    if os.path.isdir(item_path): 
+                        imgs = [f for f in os.listdir(item_path) 
+                                if f.lower().endswith(('.jpg','.jpeg','.png','.webp'))] 
+                        if imgs: 
+                            best_score = score 
+                            best_match = os.path.join(item_path, imgs[0]) 
+                    elif os.path.isfile(item_path) and item.lower().endswith( 
+                            ('.jpg','.jpeg','.png','.webp')): 
+                        best_score = score 
+                        best_match = item_path 
+    
+            if best_match and best_score > 0: 
+                self.log_and_broadcast( 
+                    f"Fuzzy matched '{product_name}' to '{best_match}' (score={best_score})", 
+                    "IMAGE FOUND" 
+                ) 
+                return best_match 
+    
+            # METHOD 3 — Use ANY available image as last resort 
+            for item in os.listdir(products_dir): 
+                item_path = os.path.join(products_dir, item) 
+                if os.path.isdir(item_path): 
+                    imgs = [f for f in os.listdir(item_path) 
+                            if f.lower().endswith(('.jpg','.jpeg','.png','.webp'))] 
+                    if imgs: 
+                        img_path = os.path.join(item_path, imgs[0]) 
+                        self.log_and_broadcast( 
+                            f"No match for '{product_name}' — using fallback image", 
+                            "WARNING" 
+                        ) 
+                        return img_path 
+                elif os.path.isfile(item_path) and item.lower().endswith( 
+                        ('.jpg','.jpeg','.png','.webp')): 
+                    return item_path 
+    
+        except Exception as e: 
+            self.log_and_broadcast(f"Folder search failed: {str(e)[:80]}", "ERROR") 
+    
+        return None 
 
     def _generate_text_only_image(self, brief):
         """Branded 1080x1080 teal text image when no product photo exists."""
