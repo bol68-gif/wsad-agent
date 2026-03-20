@@ -390,16 +390,21 @@ def resume_agent():
 @api_bp.route("/products/scrape", methods=["POST"]) 
 @login_required 
 def scrape_website_products(): 
-    try: 
+    import threading 
+    def run_scrape(): 
         from data.product_scraper import scrape_products 
-        products = scrape_products() 
-        return jsonify({ 
-            "success": True, 
-            "message": f"Scraped {len(products)} products from relaxfashionwear.in", 
-            "products": products 
-        }) 
-    except Exception as e: 
-        return jsonify({"success": False, "message": str(e)}) 
+        from dashboard.app import get_app 
+        app = get_app() 
+        with app.app_context(): 
+            results = scrape_products() 
+            from dashboard.socketio_events import broadcast_log 
+            broadcast_log("System", "SCRAPE COMPLETE", 
+                f"Scraped {len(results)} products — images downloaded to assets/products/") 
+    threading.Thread(target=run_scrape, daemon=True).start() 
+    return jsonify({ 
+        "success": True, 
+        "message": "Scraping started — watch logs for progress. Takes 1-2 minutes." 
+    }) 
 
 # ── PRODUCTS ────────────────────────────────────────── 
 from werkzeug.utils import secure_filename 
