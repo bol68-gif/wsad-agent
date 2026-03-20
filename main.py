@@ -1,3 +1,4 @@
+import os 
 from dashboard.app import create_app, socketio 
  
 app = create_app() 
