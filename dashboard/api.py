@@ -442,6 +442,95 @@ def upload_product_image(product_id):
         "image_url": f"/static/products/{product_id}/{filename}" 
     }) 
  
+@api_bp.route("/products/<int:product_id>/images") 
+@login_required 
+def get_product_images(product_id): 
+    """Returns all image URLs for a product""" 
+    from data.database import Product 
+    import os 
+    product = Product.query.get(product_id) 
+    if not product: 
+        return jsonify({"images": []}) 
+ 
+    images = [] 
+ 
+    # Parse all_images field 
+    if product.all_images: 
+        for img in product.all_images.split(","): 
+            img = img.strip() 
+            if not img or img == 'None': 
+                continue 
+            if img.startswith("http"): 
+                images.append(img) 
+            else: 
+                clean = img.replace("\\", "/").split("assets/products/")[-1] 
+                images.append("/static/products/" + clean) 
+ 
+    # Also check local folder 
+    folder = os.path.join("assets", "products", str(product_id)) 
+    if os.path.exists(folder): 
+        for fname in sorted(os.listdir(folder)): 
+            if fname.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')): 
+                url = f"/static/products/{product_id}/{fname}" 
+                if url not in images: 
+                    images.append(url) 
+ 
+    # Add primary image if not already in list 
+    if product.primary_image: 
+        if product.primary_image.startswith("http"): 
+            if product.primary_image not in images: 
+                images.insert(0, product.primary_image) 
+        else: 
+            clean = product.primary_image.replace("\\", "/").split("assets/products/")[-1] 
+            url = "/static/products/" + clean 
+            if url not in images: 
+                images.insert(0, url) 
+ 
+    return jsonify({"images": images, "count": len(images)}) 
+ 
+ 
+@api_bp.route("/products/<int:product_id>/priority", methods=["POST"]) 
+@login_required 
+def set_product_priority(product_id): 
+    """Set product priority level""" 
+    from data.database import Product 
+    product = Product.query.get(product_id) 
+    if not product: 
+        return jsonify({"success": False, "message": "Product not found"}) 
+    data     = request.get_json() 
+    priority = data.get("priority", "medium").lower() 
+    if priority not in ["low", "medium", "high"]: 
+        return jsonify({"success": False, "message": "Invalid priority"}) 
+    product.priority = priority 
+    db.session.commit() 
+    return jsonify({ 
+        "success":  True, 
+        "message":  f"Priority set to {priority.upper()}", 
+        "priority": priority 
+    }) 
+ 
+ 
+@api_bp.route("/products/<int:product_id>/delete", methods=["DELETE"]) 
+@login_required 
+def delete_product(product_id): 
+    """Delete a product and its local images""" 
+    from data.database import Product 
+    import shutil 
+    product = Product.query.get(product_id) 
+    if not product: 
+        return jsonify({"success": False, "message": "Product not found"}) 
+    name = product.name 
+    # Delete local image folder 
+    folder = os.path.join("assets", "products", str(product_id)) 
+    if os.path.exists(folder): 
+        try: 
+            shutil.rmtree(folder) 
+        except Exception as e: 
+            print(f"Could not delete folder: {e}") 
+    db.session.delete(product) 
+    db.session.commit() 
+    return jsonify({"success": True, "message": f"{name} deleted"})
+ 
 @api_bp.route("/products/add", methods=["POST"]) 
 @login_required 
 def add_product(): 
