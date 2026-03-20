@@ -274,7 +274,7 @@ def _fallback_gap_analysis():
     }
 
 
-def _save_gap_analysis(gaps):
+def _save_gap_analysis(result):
     """Update competitor records with latest gap findings."""
     app = get_app()
     with app.app_context():
@@ -283,13 +283,21 @@ def _save_gap_analysis(gaps):
             competitors = Competitor.query.filter_by(active=True).all()
             
             # Handle nested or flat structure
-            gaps_data = gaps.get("gaps", [])
+            gaps_data = result.get("gaps", [])
             if isinstance(gaps_data, dict):
                 gaps_list = gaps_data.get("gaps", [])
             else:
                 gaps_list = gaps_data if isinstance(gaps_data, list) else []
+            
+            # Ensure items are strings for join()
+            clean_gaps = []
+            for item in gaps_list:
+                if isinstance(item, dict):
+                    clean_gaps.append(item.get("gap", str(item)))
+                else:
+                    clean_gaps.append(str(item))
                 
-            gap_text = " | ".join(gaps_list[:3]) if gaps_list else "None identified"
+            gap_text = " | ".join(clean_gaps[:3]) if clean_gaps else "None identified"
             for comp in competitors:
                 comp.content_gaps = gap_text
             db.session.commit()

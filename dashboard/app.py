@@ -49,8 +49,15 @@ def create_app():
  
     @app.route('/static/products/<path:filename>') 
     def serve_product_image(filename): 
+        # Handle both absolute paths and relative paths 
+        if os.path.isabs(filename): 
+            return send_from_directory( 
+                os.path.dirname(filename), 
+                os.path.basename(filename)) 
+        # Remove any accidental "assets/products/" prefix 
+        clean = filename.replace('assets/products/', '').replace('assets\\products\\', '') 
         return send_from_directory( 
-            os.path.join(os.getcwd(), 'assets', 'products'), filename) 
+            os.path.join(os.getcwd(), 'assets', 'products'), clean) 
 
     @app.route('/generated/<path:filename>') 
     def serve_generated(filename): 

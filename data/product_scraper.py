@@ -50,9 +50,7 @@ PRODUCT_CATALOG = [
         "name":     "Urban Rain Suit", 
         "category": "Men", 
         "price":    1450, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/blueyellow1.webp", 
-        ], 
+        "images": [], 
         "features": ["Lightweight fabric", "Compact pouch", "Adjustable hood", "Double zipper"], 
         "description": "Modern urban design with superior water resistance. For office commuters and city riders.", 
         "url": f"{BASE_URL}/product/premium-double-layer-rain-suit-for-men-men-s-urban-suit-jacket-pant" 
@@ -62,9 +60,7 @@ PRODUCT_CATALOG = [
         "name":     "Classic Rain Set", 
         "category": "Men", 
         "price":    1399, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/green1.webp", 
-        ], 
+        "images": [], 
         "features": ["Durable PVC", "Classic fit", "Sealed pockets", "Elastic cuffs"], 
         "description": "Durable and stylish classic raincoat for everyday use.", 
         "url": f"{BASE_URL}/product/men-s-classic-raincoat" 
@@ -74,9 +70,7 @@ PRODUCT_CATALOG = [
         "name":     "Pro Biker Rain Set", 
         "category": "Biker", 
         "price":    1599, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/bluebiker1.webp", 
-        ], 
+        "images": [], 
         "features": ["Jacket + Pant set", "Anti-flap design", "Reflective safety strips", "Highway grade"], 
         "description": "Heavy-duty biker rain suit. Engineered for highway riding and heavy downpours.", 
         "url": f"{BASE_URL}/product/pro-biker-rain-suit" 
@@ -86,9 +80,7 @@ PRODUCT_CATALOG = [
         "name":     "Women Long Rain Coat", 
         "category": "Women", 
         "price":    1399, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/womenlong1.webp", 
-        ], 
+        "images": [], 
         "features": ["Full length protection", "Stylish design", "Fits over saree/kurta", "Lightweight"], 
         "description": "Full-length protection for maximum coverage. Stylish and functional for working women.", 
         "url": f"{BASE_URL}/product/womens-long-raincoat" 
@@ -98,9 +90,7 @@ PRODUCT_CATALOG = [
         "name":     "Kids Cartoon Rain Set", 
         "category": "Kids", 
         "price":    899, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/kidscartoon1.webp", 
-        ], 
+        "images": [], 
         "features": ["Cartoon prints", "Bag cover included", "Easy zipper", "Reflective strips"], 
         "description": "Colorful cartoon printed raincoat for kids. Keeps them dry and happy.", 
         "url": f"{BASE_URL}/product/kids-cartoon-raincoat" 
@@ -110,9 +100,7 @@ PRODUCT_CATALOG = [
         "name":     "Kids Solid Rain Set", 
         "category": "Kids", 
         "price":    899, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/kidssolid1.webp", 
-        ], 
+        "images": [], 
         "features": ["Solid colors", "School bag cover", "Durable material", "Safe for kids"], 
         "description": "Solid color raincoat for kids. Simple and elegant.", 
         "url": f"{BASE_URL}/product/kids-solid-raincoat" 
@@ -122,9 +110,7 @@ PRODUCT_CATALOG = [
         "name":     "Kids Rain Suit", 
         "category": "Kids", 
         "price":    999, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/kidssuit1.webp", 
-        ], 
+        "images": [], 
         "features": ["Full suit jacket+pant", "Premium material", "School ready", "Waterproof"], 
         "description": "Full protection rain suit for kids. Premium quality.", 
         "url": f"{BASE_URL}/product/kids-rain-suit" 
@@ -134,9 +120,7 @@ PRODUCT_CATALOG = [
         "name":     "Poncho", 
         "category": "Unisex", 
         "price":    599, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/poncho1.webp", 
-        ], 
+        "images": [], 
         "features": ["One size fits all", "Easy to wear", "Budget friendly", "Compact"], 
         "description": "Simple and effective rain poncho. Good for short trips.", 
         "url": f"{BASE_URL}/product/poncho" 
@@ -146,9 +130,7 @@ PRODUCT_CATALOG = [
         "name":     "Windcheater", 
         "category": "Unisex", 
         "price":    799, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/windcheater1.webp", 
-        ], 
+        "images": [], 
         "features": ["Wind resistant", "Lightweight", "Casual style", "Youth appeal"], 
         "description": "Lightweight windcheater. Perfect for college students and young adults.", 
         "url": f"{BASE_URL}/product/windcheater" 
@@ -158,9 +140,7 @@ PRODUCT_CATALOG = [
         "name":     "Reversible Rain Jacket", 
         "category": "Unisex", 
         "price":    1599, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/reversible1.webp", 
-        ], 
+        "images": [], 
         "features": ["Two looks in one", "Fully waterproof", "Premium fashion", "Versatile"], 
         "description": "Versatile reversible jacket. Two looks in one, fully waterproof.", 
         "url": f"{BASE_URL}/product/reversible-rain-jacket" 
@@ -170,9 +150,7 @@ PRODUCT_CATALOG = [
         "name":     "Hi-Vis Orange Safety", 
         "category": "Safety", 
         "price":    1199, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/hiviz-orange1.webp", 
-        ], 
+        "images": [], 
         "features": ["High visibility orange", "Industrial grade", "Reflective tape", "Safety certified"], 
         "description": "High visibility orange safety raincoat for industrial and road workers.", 
         "url": f"{BASE_URL}/product/hi-vis-orange-safety-raincoat" 
@@ -182,9 +160,7 @@ PRODUCT_CATALOG = [
         "name":     "Hi-Vis Green Safety", 
         "category": "Safety", 
         "price":    1199, 
-        "images": [ 
-            f"{BASE_URL}/images/product-images/hiviz-green1.webp", 
-        ], 
+        "images": [], 
         "features": ["High visibility green", "Security grade", "Reflective tape", "All weather"], 
         "description": "High visibility green safety raincoat for security and road workers.", 
         "url": f"{BASE_URL}/product/hi-vis-green-safety-raincoat" 
@@ -212,88 +188,74 @@ def download_image(url, save_path):
     return None 
  
  
-def scrape_product_page_live(slug): 
-    """ 
-    Try to scrape live data from product page. 
-    Extracts images from img tags with Cloudinary or /images/ src. 
-    """ 
+def _try_fetch_real_images(slug): 
+    """Try to get real image URLs by scraping the product page""" 
     url = f"{BASE_URL}/product/{slug}" 
     try: 
-        headers = { 
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" 
-        } 
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"} 
         resp = requests.get(url, timeout=15, headers=headers) 
         if resp.status_code != 200: 
             return [] 
- 
         soup = BeautifulSoup(resp.text, "lxml") 
         images = [] 
- 
         for img in soup.find_all("img"): 
-            src = (img.get("src") or img.get("data-src") or 
-                   img.get("data-lazy-src") or "") 
+            src = img.get("src") or img.get("data-src") or "" 
             if not src: 
                 continue 
-            # Only product images — from Cloudinary or product-images path 
-            if ("cloudinary" in src or 
-                "product-images" in src or 
-                "product" in src.lower()): 
+            if "cloudinary" in src or "product-images" in src: 
                 if src.startswith("//"): 
                     src = "https:" + src 
                 elif src.startswith("/"): 
                     src = BASE_URL + src 
-                # Skip logos, icons, tiny images 
-                if any(x in src for x in ["logo", "icon", "favicon", "background"]): 
-                    continue 
-                if src not in images: 
-                    images.append(src) 
- 
+                if not any(x in src for x in ["logo", "icon", "background", "favicon"]): 
+                    if src not in images: 
+                        images.append(src) 
         return images 
-    except Exception as e: 
-        print(f"Live scrape failed for {slug}: {e}") 
+    except: 
         return [] 
  
  
 def scrape_products(): 
-    """ 
-    Main scraper — uses hardcoded catalog + tries to fetch 
-    live images for each product. 
-    """ 
     from data.database import db, Product 
     from dashboard.socketio_events import broadcast_log 
  
-    broadcast_log("System", "SCRAPING", 
-        f"Starting product scrape from relaxfashionwear.in...") 
- 
+    broadcast_log("System", "SCRAPING", "Starting scrape from relaxfashionwear.in...") 
     scraped = [] 
  
     for product_data in PRODUCT_CATALOG: 
         try: 
-            name    = product_data["name"] 
-            slug    = product_data["slug"] 
-            images  = list(product_data["images"])  # Start with known images 
+            name = product_data["name"] 
+            slug = product_data["slug"] 
  
-            broadcast_log("System", "SCRAPING", 
-                f"Scraping {name}...") 
+            broadcast_log("System", "SCRAPING", f"Fetching {name}...") 
  
-            # Try to get additional live images 
-            live_images = scrape_product_page_live(slug) 
-            for img in live_images: 
-                if img not in images: 
-                    images.append(img) 
+            # ALWAYS try live scrape first 
+            live_images = _try_fetch_real_images(slug) 
  
-            # Download first 3 images locally 
+            # Use live images if found, otherwise use catalog images 
+            images = live_images if live_images else [ 
+                img for img in product_data.get("images", []) 
+                if img.startswith("https://res.cloudinary.com")  # Only confirmed Cloudinary URLs 
+            ] 
+ 
+            if not images: 
+                broadcast_log("System", "WARNING", 
+                    f"{name} — no images found, will use text fallback") 
+ 
+            # Download images locally 
             local_images = [] 
-            products_dir = os.path.join("assets", "products", 
-                slug.replace("-", "_")) 
+            folder_name  = slug.replace("-", "_") 
+            products_dir = os.path.join("assets", "products", folder_name) 
             os.makedirs(products_dir, exist_ok=True) 
  
             for i, img_url in enumerate(images[:3]): 
+                # Skip invalid URLs 
+                if not img_url.startswith("http"): 
+                    continue 
                 ext = "webp" if ".webp" in img_url else ( 
                       "png"  if ".png"  in img_url else "jpg") 
                 save_path = os.path.join(products_dir, f"image_{i+1}.{ext}") 
  
-                # Skip if already downloaded 
                 if os.path.exists(save_path): 
                     local_images.append(save_path) 
                     continue 
@@ -302,14 +264,21 @@ def scrape_products():
                 if downloaded: 
                     local_images.append(downloaded) 
                     broadcast_log("System", "IMAGE SAVED", 
-                        f"{name} image {i+1} downloaded") 
+                        f"{name} image {i+1} saved") 
+                else: 
+                    broadcast_log("System", "WARNING", 
+                        f"{name} image {i+1} failed to download") 
  
-            primary_image = local_images[0] if local_images else ( 
-                            images[0]      if images       else None) 
+            # primary_image = local path if downloaded, else direct Cloudinary URL 
+            if local_images: 
+                primary_image = local_images[0] 
+            elif images: 
+                primary_image = images[0]  # Use URL directly 
+            else: 
+                primary_image = None 
  
-            # Save or update in database 
+            # Save to database 
             existing = Product.query.filter_by(name=name).first() 
- 
             if not existing: 
                 p = Product( 
                     name          = name, 
@@ -319,41 +288,30 @@ def scrape_products():
                     features      = ", ".join(product_data.get("features", [])), 
                     website_url   = product_data["url"], 
                     primary_image = primary_image, 
-                    all_images    = ",".join(images), 
+                    all_images    = ",".join(images[:3]) if images else "", 
                     priority      = "HIGH" if product_data["price"] >= 1400 else "MEDIUM", 
                     active        = True, 
                     scraped_at    = datetime.utcnow() 
                 ) 
                 db.session.add(p) 
-                broadcast_log("System", "PRODUCT ADDED", 
-                    f"Added {name} — Rs{product_data['price']}") 
             else: 
                 existing.category      = product_data["category"] 
                 existing.price         = product_data["price"] 
                 existing.description   = product_data.get("description", "") 
                 existing.features      = ", ".join(product_data.get("features", [])) 
                 existing.website_url   = product_data["url"] 
-                existing.all_images    = ",".join(images) 
                 existing.scraped_at    = datetime.utcnow() 
-                if not existing.primary_image or not os.path.exists( 
-                        existing.primary_image or ""): 
+                if primary_image: 
                     existing.primary_image = primary_image 
-                broadcast_log("System", "PRODUCT UPDATED", 
-                    f"Updated {name}") 
+                if images: 
+                    existing.all_images = ",".join(images[:3]) 
  
             db.session.commit() 
- 
-            scraped.append({ 
-                "name":          name, 
-                "images_found":  len(images), 
-                "local_images":  len(local_images), 
-                "primary_image": primary_image 
-            }) 
+            scraped.append({"name": name, "images": len(local_images)}) 
+            broadcast_log("System", "DONE", f"{name} — {len(local_images)} images saved") 
  
         except Exception as e: 
-            broadcast_log("System", "ERROR", 
-                f"Failed to process {product_data.get('name','?')}: {str(e)[:80]}") 
-            print(f"Product error: {e}") 
+            broadcast_log("System", "ERROR", f"Failed {product_data.get('name','?')}: {str(e)[:80]}") 
  
     broadcast_log("System", "SCRAPE COMPLETE", 
         f"Done — {len(scraped)} products processed") 

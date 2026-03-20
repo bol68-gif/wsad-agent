@@ -32,7 +32,15 @@
         <div class="product-card card overflow-hidden" data-category="{{ product.category }}">
             <div class="aspect-[4/5] bg-[#0A0A0A] relative">
                 <img id="productImg_{{ product.id }}" 
-                     src="{% if product.primary_image %}/static/products/{{ product.primary_image.split('products/')[-1] }}{% else %}data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDQwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI1MDAiIGZpbGw9IiMxQTFBMUEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzMzMyIgZm9udC1mYW1pbHk9IkJlYmFzIE5ldWUsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDAiPk5PIElNQUdFPC90ZXh0Pjwvc3ZnPg=={% endif %}" 
+                     src="{% if product.primary_image %}
+                            {% if product.primary_image.startswith('http') %}
+                                {{ product.primary_image }}
+                            {% else %}
+                                /static/products/{{ product.primary_image.replace('\\', '/').split('assets/products/')[-1] }}
+                            {% endif %}
+                         {% else %}
+                            data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDQwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI1MDAiIGZpbGw9IiMxQTFBMUEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzMzMyIgZm9udC1mYW1pbHk9IkJlYmFzIE5ldWUsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDAiPk5PIElNQUdFPC90ZXh0Pjwvc3ZnPg==
+                         {% endif %}" 
                      class="w-full h-full object-cover" 
                      onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDQwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI1MDAiIGZpbGw9IiMxQTFBMUEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI0ZGMDAwMCIgZm9udC1mYW1pbHk9IkJlYmFzIE5ldWUsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDAiPklNQUdFIEVSUk9SPC90ZXh0Pjwvc3ZnPg=='">
                 <div class="absolute top-3 left-3 bg-[#111]/80 backdrop-blur-md text-[9px] font-bold px-2 py-1 rounded uppercase tracking-tighter border border-[#333]">{{ product.category }}</div>
