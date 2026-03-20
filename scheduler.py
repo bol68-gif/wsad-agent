@@ -338,15 +338,52 @@ def setup_scheduler():
     scheduler.add_job(run_monthly_plan, CronTrigger(day=1, hour=0, minute=0), 
                       id="monthly_plan", replace_existing=True) 
  
+def setup_scheduler(): 
+    # Morning brief — 2AM IST 
+    scheduler.add_job(run_morning_brief, CronTrigger(hour=2, minute=0), 
+                      id="morning_brief", replace_existing=True) 
+    # Content creation — 3AM IST 
+    scheduler.add_job(run_content_creation, CronTrigger(hour=3, minute=0), 
+                      id="content_creation", replace_existing=True) 
+    # Auto post morning — 8:30AM IST 
+    scheduler.add_job(run_auto_post_job, CronTrigger(hour=8, minute=30), 
+                      id="auto_post_morning", replace_existing=True) 
+    # Auto post evening — 8:30PM IST 
+    scheduler.add_job(run_auto_post_job, CronTrigger(hour=20, minute=30), 
+                      id="auto_post_evening", replace_existing=True) 
+    # Weather — every 30 mins 
+    scheduler.add_job(run_weather_check, "interval", minutes=30, 
+                      id="weather_check", replace_existing=True) 
+    # Analytics — every 2 hours 
+    scheduler.add_job(run_analytics_collection, "interval", hours=2, 
+                      id="analytics", replace_existing=True) 
+    # Competitor scan — daily 1AM 
+    scheduler.add_job(run_competitor_scan, CronTrigger(hour=1, minute=0), 
+                      id="competitor_scan", replace_existing=True) 
+    # Learning engine — runs at 4AM daily after content creation 
+    scheduler.add_job(run_learning_cycle, CronTrigger(hour=4, minute=0), 
+                      id="learning_cycle", replace_existing=True) 
+    # Every 6 hours — keeps posts flowing all day 
+    scheduler.add_job(run_content_creation, "interval", hours=6, 
+                      id="content_cycle", replace_existing=True) 
+    # Monthly plan — 1st of every month at midnight 
+    scheduler.add_job(run_monthly_plan, CronTrigger(day=1, hour=0, minute=0), 
+                      id="monthly_plan", replace_existing=True) 
+ 
     scheduler.start() 
     print("✅ Scheduler started — all jobs active") 
  
-    # Run immediately on startup 
-    threading.Thread(target=seed_initial_data, daemon=True).start() 
-    threading.Thread(target=run_competitor_scan, daemon=True).start() 
-    threading.Thread(target=startup_content_check,  daemon=True).start() 
-    # Generate monthly plan on startup if none exists 
-    threading.Thread(target=_check_monthly_plan,    daemon=True).start() 
+    # Run immediately on startup in protected threads
+    def run_protected(target, name):
+        try:
+            target()
+        except Exception as e:
+            print(f"❌ Startup job '{name}' failed: {e}")
+
+    threading.Thread(target=run_protected, args=(seed_initial_data, "seed"), daemon=True).start() 
+    threading.Thread(target=run_protected, args=(run_competitor_scan, "competitor_scan"), daemon=True).start() 
+    threading.Thread(target=run_protected, args=(startup_content_check, "startup_check"), daemon=True).start() 
+    threading.Thread(target=run_protected, args=(_check_monthly_plan, "monthly_plan_check"), daemon=True).start() 
  
     return scheduler 
  

@@ -192,7 +192,7 @@ PRODUCT_CATALOG = [
 ] 
  
  
- def download_image(url, save_path): 
+def download_image(url, save_path): 
     """Download image from URL and save locally""" 
     try: 
         headers = { 
@@ -212,7 +212,7 @@ PRODUCT_CATALOG = [
     return None 
  
  
- def scrape_product_page_live(slug): 
+def scrape_product_page_live(slug): 
     """ 
     Try to scrape live data from product page. 
     Extracts images from img tags with Cloudinary or /images/ src. 
@@ -254,7 +254,7 @@ PRODUCT_CATALOG = [
         return [] 
  
  
- def scrape_products(): 
+def scrape_products(): 
     """ 
     Main scraper — uses hardcoded catalog + tries to fetch 
     live images for each product. 
@@ -360,7 +360,7 @@ PRODUCT_CATALOG = [
     return scraped 
  
  
- def get_products_from_catalog(): 
+def get_products_from_catalog(): 
     """ 
     Returns product catalog without scraping — instant. 
     Use this to seed DB without downloading images. 

@@ -203,19 +203,36 @@ def run_gap_analysis():
 
         broadcast_log("Growth Hacker", "WORKING",
             "🚀 [Growth Hacker] Step 3/4 — Identifying content gaps none of 5 competitors are filling...")
-        gaps = hacker.find_gaps()
+        result = hacker.find_gaps()
 
         broadcast_log("Growth Hacker", "WORKING",
             "🚀 [Growth Hacker] Step 4/4 — Mapping gaps to RF content opportunities...")
 
-        gap_list  = gaps.get("gaps", [])
-        opps      = gaps.get("opportunities", [])
-        reco      = gaps.get("recommended_content", [])
+        # GrowthHacker.find_gaps() returns { "gaps": { "gaps": [...] }, "post_ideas": { "ideas": [...] } }
+        # Or it might return { "gaps": [...], "opportunities": [...], "recommended_content": [...] }
+        # We handle both formats for safety.
+        
+        gaps_data = result.get("gaps", {})
+        if isinstance(gaps_data, dict):
+            gap_list = gaps_data.get("gaps", [])
+        else:
+            gap_list = gaps_data if isinstance(gaps_data, list) else []
+
+        opps = result.get("opportunities", [])
+        reco = result.get("recommended_content", [])
+        
+        # If the keys were missing, maybe they are in post_ideas
+        if not reco and "post_ideas" in result:
+            ideas_data = result.get("post_ideas", {})
+            if isinstance(ideas_data, dict):
+                reco = ideas_data.get("ideas", [])
+            else:
+                reco = ideas_data if isinstance(ideas_data, list) else []
 
         broadcast_log("Growth Hacker", "GAP ANALYSIS COMPLETE",
             f"🚀 [Growth Hacker] Found {len(gap_list)} gaps | "
             f"{len(opps)} opportunities | "
-            f"Top gap: {gap_list[0] if gap_list else 'N/A'}"
+            f"Top gap: {gap_list[0] if (isinstance(gap_list, list) and gap_list) else 'N/A'}"
         )
 
         for i, gap in enumerate(gap_list[:3], 1):
@@ -227,12 +244,12 @@ def run_gap_analysis():
                 f"💡 {opp}")
 
         # Save to competitor records
-        _save_gap_analysis(gaps)
+        _save_gap_analysis(result)
 
         # Create notification
         _create_gap_notification(gap_list, opps)
 
-        return gaps
+        return result
 
     except Exception as e:
         broadcast_log("Growth Hacker", "ERROR",
@@ -264,12 +281,20 @@ def _save_gap_analysis(gaps):
         try:
             from data.database import db, Competitor
             competitors = Competitor.query.filter_by(active=True).all()
-            gap_text = " | ".join(gaps.get("gaps", [])[:3])
+            
+            # Handle nested or flat structure
+            gaps_data = gaps.get("gaps", [])
+            if isinstance(gaps_data, dict):
+                gaps_list = gaps_data.get("gaps", [])
+            else:
+                gaps_list = gaps_data if isinstance(gaps_data, list) else []
+                
+            gap_text = " | ".join(gaps_list[:3]) if gaps_list else "None identified"
             for comp in competitors:
                 comp.content_gaps = gap_text
             db.session.commit()
-        except:
-            pass
+        except Exception as e:
+            print(f"Error saving gap analysis: {e}")
 
 
 def _create_gap_notification(gaps, opportunities):

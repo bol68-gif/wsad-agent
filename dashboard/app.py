@@ -28,7 +28,10 @@ def create_app():
         async_mode          = "threading", 
         cors_allowed_origins= "*", 
         logger              = False, 
-        engineio_logger     = False 
+        engineio_logger     = False,
+        allow_upgrades      = False,
+        ping_timeout        = 60,
+        ping_interval       = 25
     ) 
     limiter.init_app(app) 
 
