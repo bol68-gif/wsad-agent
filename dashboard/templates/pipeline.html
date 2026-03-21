@@ -314,6 +314,20 @@
    text.textContent = label; 
  } 
  
+ function getImageUrl(imagePath) { 
+     if (!imagePath || imagePath === '' || imagePath === 'null') { 
+         return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect fill="%23111" width="400" height="400"/><text x="50%" y="50%" fill="%23333" font-size="24" text-anchor="middle" dominant-baseline="middle">Generating...</text></svg>'; 
+     } 
+     // Already a full URL 
+     if (imagePath.startsWith('http')) { 
+         return imagePath; 
+     } 
+     // Extract just the filename from any path 
+     var filename = imagePath.replace(/\\/g, '/').split('/').pop(); 
+     if (!filename) return ''; 
+     return '/generated/' + filename; 
+ } 
+ 
  // ── LOAD PIPELINE ──────────────────────────────── 
  async function loadPipeline() { 
    try {
@@ -406,7 +420,7 @@
         <div style="display:grid;grid-template-columns:300px 1fr 300px;min-height:400px"> 
           <!-- Image --> 
           <div style="background:#0a0a0a;display:flex;align-items:center;justify-content:center;border-right:1px solid #1a1a1a"> 
-            <img src="${post.image_path ? '/generated/' + post.image_path.split(/[\\/]/).pop() : '/static/img/placeholder.png'}"  
+            <img src="${getImageUrl(post.image_path)}" 
                  style="max-width:100%;max-height:100%;object-fit:contain" 
                  onerror="this.src='/static/img/placeholder.png'"> 
           </div> 

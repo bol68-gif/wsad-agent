@@ -47,6 +47,20 @@ def create_app():
 
     from flask import send_from_directory 
  
+    # Auto-create placeholder on startup 
+    placeholder_dir = os.path.join(app.root_path, "static", "img") 
+    placeholder_path = os.path.join(placeholder_dir, "placeholder.png") 
+    if not os.path.exists(placeholder_path): 
+        os.makedirs(placeholder_dir, exist_ok=True) 
+        try: 
+            from PIL import Image, ImageDraw 
+            img  = Image.new("RGB", (400, 400), (20, 20, 20)) 
+            draw = ImageDraw.Draw(img) 
+            draw.text((200, 200), "NO IMAGE", fill=(80,80,80), anchor="mm") 
+            img.save(placeholder_path) 
+        except Exception as e: 
+            print(f"Error creating placeholder: {e}")
+
     @app.route('/static/products/<path:filename>') 
     def serve_product_image(filename): 
         # Handle both absolute paths and relative paths 
