@@ -71,13 +71,22 @@ def run_content_creation():
             broadcast_log("Strategist", "WORKING", "Generating morning brief...") 
             s = Strategist() 
             brief = s.morning_brief() 
-            
-            # Add product features from catalog 
-            from data.product_catalog import PRODUCTS 
-            for p in PRODUCTS: 
-                if p["name"].lower() in brief.get("product_name","").lower(): 
-                    brief["features"] = p.get("features", []) 
-                    break
+ 
+            # Add product features so templates can use them 
+            try: 
+                from data.product_catalog import PRODUCTS 
+                for p in PRODUCTS: 
+                    pname = p.get("name","").lower() 
+                    bname = brief.get("product_name","").lower() 
+                    if pname in bname or bname in pname or any( 
+                            w in bname for w in pname.split() 
+                            if len(w) > 3): 
+                        brief["features"] = p.get("features", []) 
+                        brief["target_persona"] = p.get("target_persona", "") 
+                        brief["pain_points"] = p.get("pain_points", []) 
+                        break 
+            except Exception as e: 
+                print(f"Features lookup error: {e}")
 
             broadcast_log("Strategist", "BRIEF READY", f"Brief: {brief.get('product_name')} — {brief.get('creative_angle','')[:80]}") 
             time.sleep(3) # Rate limit protection 
@@ -313,38 +322,6 @@ def run_monthly_plan():
             db.session.commit() 
         except Exception as e: 
             print(f"Monthly plan error: {e}") 
- 
-def setup_scheduler(): 
-    # Morning brief — 2AM IST 
-    scheduler.add_job(run_morning_brief, CronTrigger(hour=2, minute=0), 
-                      id="morning_brief", replace_existing=True) 
-    # Content creation — 3AM IST 
-    scheduler.add_job(run_content_creation, CronTrigger(hour=3, minute=0), 
-                      id="content_creation", replace_existing=True) 
-    # Auto post morning — 8:30AM IST 
-    scheduler.add_job(run_auto_post_job, CronTrigger(hour=8, minute=30), 
-                      id="auto_post_morning", replace_existing=True) 
-    # Auto post evening — 8:30PM IST 
-    scheduler.add_job(run_auto_post_job, CronTrigger(hour=20, minute=30), 
-                      id="auto_post_evening", replace_existing=True) 
-    # Weather — every 30 mins 
-    scheduler.add_job(run_weather_check, "interval", minutes=30, 
-                      id="weather_check", replace_existing=True) 
-    # Analytics — every 2 hours 
-    scheduler.add_job(run_analytics_collection, "interval", hours=2, 
-                      id="analytics", replace_existing=True) 
-    # Competitor scan — daily 1AM 
-    scheduler.add_job(run_competitor_scan, CronTrigger(hour=1, minute=0), 
-                      id="competitor_scan", replace_existing=True) 
-    # Learning engine — runs at 4AM daily after content creation 
-    scheduler.add_job(run_learning_cycle, CronTrigger(hour=4, minute=0), 
-                      id="learning_cycle", replace_existing=True) 
-    # Every 6 hours — keeps posts flowing all day 
-    scheduler.add_job(run_content_creation, "interval", hours=6, 
-                      id="content_cycle", replace_existing=True) 
-    # Monthly plan — 1st of every month at midnight 
-    scheduler.add_job(run_monthly_plan, CronTrigger(day=1, hour=0, minute=0), 
-                      id="monthly_plan", replace_existing=True) 
  
 def setup_scheduler(): 
     # Morning brief — 2AM IST 
