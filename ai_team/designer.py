@@ -31,108 +31,58 @@ Your visuals stop the scroll in 0.3 seconds.
             """
         )
 
-    def create_post_assets(self, brief, caption, post_id=None):
-        """Full visual pipeline. Returns dict with image paths."""
-        product_name = brief.get("product_name", "RF Product")
-        template     = brief.get("template", "dark_cinematic")
-
-        self.log_and_broadcast(
-            f"🎨 [Designer] VISUAL PIPELINE STARTING — Product: {product_name} | Template: {template}",
-            "WORKING"
-        )
-        os.makedirs(config.GENERATED_DIR, exist_ok=True)
-        assets = {"final_image": "", "story_image": "", "ratios": {}, "success": False}
-
-        # STEP 1 — Find product image
-        self.log_and_broadcast(
-            f"🎨 [Designer] Step 1/8 — Searching assets/products/ for {product_name}...",
-            "WORKING"
-        )
-        product_image = self.get_product_image(product_name)
-
-        if not product_image:
-            self.log_and_broadcast(
-                f"⚠️ [Designer] No product image found — generating text-only fallback. Upload images at /products",
-                "WARNING"
-            )
-            fallback = self._generate_text_only_image(brief)
-            assets["final_image"] = fallback
-            if post_id:
-                self._save_image_to_post(post_id, fallback)
-            return assets
-
-        self.log_and_broadcast(f"✅ [Designer] Image found — {product_image}", "IMAGE FOUND")
-
-        try:
-            # STEP 2 — Remove background
-            self.log_and_broadcast("🎨 [Designer] Step 2/8 — Removing background with rembg AI...", "WORKING")
-            from visual.enhancer import remove_background
-            no_bg = remove_background(product_image)
-            self.log_and_broadcast(f"✅ [Designer] Background removed — {os.path.basename(no_bg)}", "BG REMOVED")
-
-            # STEP 3 — Upscale
-            self.log_and_broadcast("🎨 [Designer] Step 3/8 — Upscaling 2x with LANCZOS...", "WORKING")
-            from visual.enhancer import upscale_image
-            upscaled = upscale_image(no_bg, scale=2)
-            self.log_and_broadcast(f"✅ [Designer] Upscaled 2x — {os.path.basename(upscaled)}", "UPSCALED")
-
-            # STEP 4 — Brand overlay
-            self.log_and_broadcast("🎨 [Designer] Step 4/8 — Applying logo + website + price overlay...", "WORKING")
-            from visual.brand_overlay import apply_overlay
-            overlaid = apply_overlay(upscaled, brief)
-            self.log_and_broadcast(f"✅ [Designer] Brand overlay done — logo + relaxfashionwear.in + Rs{brief.get('price','')}", "OVERLAY DONE")
-
-            # STEP 5 — Template
-            self.log_and_broadcast(f"🎨 [Designer] Step 5/8 — Applying {template} template...", "WORKING")
-            from visual.templates import apply_template
-            templated = apply_template(overlaid, template, brief)
-            self.log_and_broadcast(f"✅ [Designer] Template '{template}' applied", "TEMPLATE DONE")
-
-            # STEP 6 — Teal color grade
-            self.log_and_broadcast("🎨 [Designer] Step 6/8 — Teal cinematic color grade via OpenCV...", "WORKING")
-            from visual.color_grader import apply_teal_grade
-            graded = apply_teal_grade(templated)
-            self.log_and_broadcast("✅ [Designer] Teal grade applied — cinematic look done", "GRADED")
-
-            # STEP 7 — Rain effects
-            self.log_and_broadcast("🎨 [Designer] Step 7/8 — Adding rain overlay effects...", "WORKING")
-            from visual.rain_effects import apply_rain
-            final = apply_rain(graded, intensity="medium")
-            self.log_and_broadcast(f"✅ [Designer] Rain effects applied — {os.path.basename(final)}", "RAIN DONE")
-
-            # STEP 8 — All aspect ratios
-            self.log_and_broadcast("🎨 [Designer] Step 8/8 — Generating 1:1, 4:5, 9:16 ratios...", "WORKING")
-            from visual.templates import generate_all_ratios
-            ratios = generate_all_ratios(final)
-            self.log_and_broadcast(
-                f"✅ [Designer] {len(ratios)} ratios ready — Feed 1080x1080 | Portrait 1080x1350 | Story 1080x1920",
-                "ALL RATIOS DONE"
-            )
-
-            assets["final_image"] = final
-            assets["story_image"] = ratios.get("9_16", final)
-            assets["ratios"]      = ratios
-            assets["success"]     = True
-
-            self.log_and_broadcast(
-                f"🎨 [Designer] ✅ FULL PIPELINE COMPLETE — "
-                f"Final: {os.path.basename(final)} | "
-                f"Ratios: {list(ratios.keys())}",
-                "VISUAL COMPLETE"
-            )
-
-            if post_id:
-                self._save_image_to_post(post_id, final)
-            self._send_visual_preview(brief, final, post_id)
-            return assets
-
-        except Exception as e:
-            self.log_and_broadcast(f"❌ [Designer] Pipeline error: {str(e)[:200]}", "ERROR")
-            fallback = self._generate_text_only_image(brief)
-            assets["final_image"] = fallback
-            if post_id:
-                self._save_image_to_post(post_id, fallback)
-            return assets
+    def create_post_assets(self, brief, caption, post_id=None): 
+        """Simplified visual pipeline — skips rembg to prevent crashes""" 
+        product_name = brief.get("product_name", "RF Product") 
+        template     = brief.get("template", "dark_cinematic") 
+    
+        self.log_and_broadcast( 
+            f"🎨 Building visual for {product_name}...", "WORKING") 
+    
+        os.makedirs(config.GENERATED_DIR, exist_ok=True) 
+        assets = {"final_image": "", "story_image": "", "ratios": {}, "success": False} 
+    
+        try: 
+            # Get product image 
+            product_image = self.get_product_image(product_name) 
+    
+            if product_image: 
+                self.log_and_broadcast( 
+                    f"Product image found — building post...", "WORKING") 
+    
+                # Skip rembg — use image directly on template 
+                from visual.templates import apply_template, generate_all_ratios 
+    
+                # Apply template directly — no background removal needed 
+                final  = apply_template(product_image, template, brief) 
+                ratios = generate_all_ratios(final) 
+    
+                assets["final_image"] = final 
+                assets["story_image"] = ratios.get("9_16", final) 
+                assets["ratios"]      = ratios 
+                assets["success"]     = True 
+    
+                self.log_and_broadcast( 
+                    f"✅ Post image ready — {os.path.basename(final)}", "VISUAL COMPLETE") 
+            else: 
+                self.log_and_broadcast( 
+                    f"No product image — using text fallback", "WARNING") 
+                from visual.templates import _create_no_image_fallback 
+                final = _create_no_image_fallback(brief, template) 
+                assets["final_image"] = final 
+                assets["success"]     = bool(final) 
+    
+            if post_id and assets["final_image"]: 
+                self._save_image_to_post(post_id, assets["final_image"]) 
+    
+            self._send_visual_preview(brief, assets["final_image"], post_id) 
+            return assets 
+    
+        except Exception as e: 
+            self.log_and_broadcast(f"Designer error: {str(e)[:150]}", "ERROR") 
+            import traceback 
+            traceback.print_exc() 
+            return assets 
 
     def get_product_image(self, product_name): 
         """Find product image — checks DB first, then folder fuzzy match""" 
