@@ -71,6 +71,14 @@ def run_content_creation():
             broadcast_log("Strategist", "WORKING", "Generating morning brief...") 
             s = Strategist() 
             brief = s.morning_brief() 
+            
+            # Add product features from catalog 
+            from data.product_catalog import PRODUCTS 
+            for p in PRODUCTS: 
+                if p["name"].lower() in brief.get("product_name","").lower(): 
+                    brief["features"] = p.get("features", []) 
+                    break
+
             broadcast_log("Strategist", "BRIEF READY", f"Brief: {brief.get('product_name')} — {brief.get('creative_angle','')[:80]}") 
             time.sleep(3) # Rate limit protection 
  
