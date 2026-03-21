@@ -55,6 +55,11 @@ Your visuals stop the scroll in 0.3 seconds.
     
                 # Apply template directly — no background removal needed 
                 final  = apply_template(product_image, template, brief) 
+                
+                # IMPORTANT: Ensure the path is absolute for DB storage
+                if final and not os.path.isabs(final):
+                    final = os.path.abspath(final)
+
                 ratios = generate_all_ratios(final) 
     
                 assets["final_image"] = final 
@@ -68,7 +73,12 @@ Your visuals stop the scroll in 0.3 seconds.
                 self.log_and_broadcast( 
                     f"No product image — using text fallback", "WARNING") 
                 from visual.templates import _create_no_image_fallback 
-                final = _create_no_image_fallback(brief, template) 
+                final = _create_no_image_fallback(brief, template)
+                
+                # IMPORTANT: Ensure the path is absolute for DB storage
+                if final and not os.path.isabs(final):
+                    final = os.path.abspath(final)
+
                 assets["final_image"] = final 
                 assets["success"]     = bool(final) 
     

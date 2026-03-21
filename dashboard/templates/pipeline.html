@@ -315,15 +315,16 @@
  } 
  
  function getImageUrl(imagePath) { 
-     if (!imagePath || imagePath === '' || imagePath === 'null') { 
-         return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect fill="%23111" width="400" height="400"/><text x="50%" y="50%" fill="%23333" font-size="24" text-anchor="middle" dominant-baseline="middle">Generating...</text></svg>'; 
+     if (!imagePath || imagePath === '' || imagePath === 'null' || imagePath === 'None') { 
+         return ''; 
      } 
-     // Already a full URL 
+     // Already a full URL (Cloudinary etc) 
      if (imagePath.startsWith('http')) { 
          return imagePath; 
      } 
-     // Extract just the filename from any path 
-     var filename = imagePath.replace(/\\/g, '/').split('/').pop(); 
+     // Extract filename from any path (Windows or Linux) 
+     var parts = imagePath.replace(/\\/g, '/').split('/'); 
+     var filename = parts[parts.length - 1]; 
      if (!filename) return ''; 
      return '/generated/' + filename; 
  } 
@@ -414,15 +415,25 @@
  function renderPostCard(post, showActions) { 
    const score = post.director_score || 0; 
    const scoreColor = score >= 8.5 ? '#008080' : '#f59e0b'; 
+   
+   var imgUrl = getImageUrl(post.image_path); 
+   var imgHtml = imgUrl 
+       ? '<img src="' + imgUrl + '" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' 
+       + '<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;color:#333">' 
+       + '<div style="font-size:32px">🖼️</div>' 
+       + '<div style="font-size:11px;margin-top:8px">Image not found</div>' 
+       + '</div>' 
+       : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#333">' 
+       + '<div style="font-size:32px">⏳</div>' 
+       + '<div style="font-size:11px;margin-top:8px;color:#444">Generating...</div>' 
+       + '</div>'; 
      
     return ` 
       <div class="post-card"> 
         <div style="display:grid;grid-template-columns:300px 1fr 300px;min-height:400px"> 
           <!-- Image --> 
           <div style="background:#0a0a0a;display:flex;align-items:center;justify-content:center;border-right:1px solid #1a1a1a"> 
-            <img src="${getImageUrl(post.image_path)}" 
-                 style="max-width:100%;max-height:100%;object-fit:contain" 
-                 onerror="this.src='/static/img/placeholder.png'"> 
+            ${imgHtml} 
           </div> 
           
          <!-- Content --> 
